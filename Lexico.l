@@ -45,7 +45,7 @@ REAL      {DIGITO}+"."{DIGITO}+
 CTEINT       {DIGITO}+
 CTESTRING	\"{LETRA}+\"
 VALID_STRING    ({CARACTER}+|{DELIM})*
-COMENTARIO_S    <--\/{VALID_STRING}\/-->
+COMENTARIO_S    --\/{VALID_STRING}\/--
 
 %%
 "="			{ return ASIG;}
@@ -64,13 +64,23 @@ COMENTARIO_S    <--\/{VALID_STRING}\/-->
 "<="		{ return MEN_IGUAL;}
 "<"			{ return COMP_MENOR;}
 ">"			{ return COMP_MAY;}
+"not"		{ return NOT;}
 "int"		{ return INT;}
 "double"	{ return DOUBLE;}
 "string"	{ return STRING;}
 ","			{ return COMA;}
 ";"			{ return PUNTO_COMA;}
 "||"		{ return OR;}
-"&&"		{ return AND;}		
+"&&"		{ return AND;}
+"while"		{ return WHILE;}
+"print"		{ return PRINT;}
+"read"		{ return READ;}
+"var"		{ return VAR;}
+"endvar"	{ return ENDVAR;}
+"["			{ return CORCH_A;}
+"]"			{ return CORCH_C;}
+":"			{ return DOSPUNTOS;}
+"const"		{ return CONST;}		
 
 
 {ID}			{ yylval.strVal = strdup(yytext); validar_id(yylval.strVal); return ID;}
