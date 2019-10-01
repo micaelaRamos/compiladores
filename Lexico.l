@@ -48,7 +48,7 @@ VALID_STRING    ({CARACTER}+|{DELIM})*
 COMENTARIO_S    --\/{VALID_STRING}\/--
 
 %%
-"="			{ return ASIG;}
+":="		{ return ASIG;}
 "+"			{ return SUMA;}
 "-"			{ return RESTA;}
 "*"			{ return MUL;}
