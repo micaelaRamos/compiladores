@@ -73,6 +73,7 @@ COMENTARIO_S    --\/{VALID_STRING}\/--
 "||"		{ return OR;}
 "&&"		{ return AND;}
 "while"		{ return WHILE;}
+"endwhile"	{	return ENDWHILE;}
 "print"		{ return PRINT;}
 "read"		{ return READ;}
 "var"		{ return VAR;}
