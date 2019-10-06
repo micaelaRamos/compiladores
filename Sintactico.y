@@ -33,6 +33,7 @@ pNodo lisAsigPtr
 /**** FIN VARIABLES ****/
 
 void crearNodo(char dat,pNodo,pNodo);
+void crearHoja(char dat);
 
 %}
 
@@ -155,7 +156,7 @@ pNodo crearNodo(char dat , pNodo nodo1 , pNodo nodo2) {
    pNodo actual = *a; 
 }
 
-pNodo crearNodo(char dat) {
+pNodo crearHoja(char dat) {
    
 }
 
