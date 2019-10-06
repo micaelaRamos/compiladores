@@ -9,6 +9,31 @@ FILE *yyin;
 char *yytext;
 extern int yylineno;
 
+/**** STRUCT ARBOL ****/
+typedef struct _nodo {
+   char dato;
+   struct _nodo *derecho;
+   struct _nodo *izquierdo;
+} tipoNodo;
+ 
+typedef tipoNodo *pNodo;
+typedef tipoNodo *Arbol;
+
+/**** INICIO VARIABLES  ARBOL****/
+
+pNodo programaPtr
+pNodo bloquePtr
+pNodo sentenciaPtr
+pNodo declaracionPtr
+pNodo lisDeclaracionPtr
+pNodo tipoVarPtr
+pNodo asigLineaPtr
+pNodo lisAsigPtr
+
+/**** FIN VARIABLES ****/
+
+void crearNodo(char dat,pNodo,pNodo);
+
 %}
 
 %union {
@@ -124,3 +149,13 @@ int yyerror(char *errMessage)
    system ("Pause");
    exit (1);
 }
+
+pNodo crearNodo(char dat , pNodo nodo1 , pNodo nodo2) {
+   pNodo padre = NULL;
+   pNodo actual = *a; 
+}
+
+pNodo crearNodo(char dat) {
+   
+}
+
