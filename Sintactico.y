@@ -35,7 +35,7 @@ Dato tipoDeDato;
 %%
 programa: bloque          {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1; ptrRaiz = $<tipoDeDato.arbol>1; }}
 bloque: sentencia         {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
-    | bloque sentencia;   
+    | bloque sentencia;   {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
 
 sentencia: declaracion    {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
     | asignacion          {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
@@ -44,9 +44,9 @@ sentencia: declaracion    {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
     | print               {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
     | read;               {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
 
-declaracion: VAR lista_declaracion ENDVAR; {{$<tipoDeDato.arbol>$ = insertarNodo("VAR",&$<tipoDeDato.arbol>1,&$<tipoDeDato.arbol>3);}}
+declaracion: VAR lista_declaracion ENDVAR; {{$<tipoDeDato.arbol>$ = insertarNodo("VAR",&$<tipoDeDato.arbol>2,&insertarHoja($3));}}
 
-lista_declaracion: tipo_var CORCH_C DOSPUNTOS CORCH_A ID;
+lista_declaracion: tipo_var CORCH_C DOSPUNTOS CORCH_A ID; {{$<tipoDeDato.arbol>$ = insertarNodo("VAR",&$<tipoDeDato.arbol>2,&insertarHoja($3));}}
 
 lista_declaracion: tipo_var COMA lista_declaracion COMA ID;
 
@@ -67,11 +67,12 @@ seleccion: IF P_A condicion P_C LL_A sentencia LL_C ELSE LL_A sentencia LL_C
     | IF P_A NOT condicion P_C LL_A sentencia LL_C
     | IF P_A NOT condicion P_C LL_A sentencia LL_C ELSE LL_A sentencia LL_C;
 
-condicion: comparacion 
-    | condicion AND comparacion 
-    | condicion OR comparacion;
 
-comparacion: expresion comparador expresion;
+condicion: comparacion  {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
+    | condicion AND comparacion  {{$<tipoDeDato.arbol>$ = insertarNodo("AND",&$<tipoDeDLato.arbol>1,&$<tipoDeDato.arbol>3);}}
+    | condicion OR comparacion;  {{$<tipoDeDato.arbol>$ = insertarNodo("OR",&$<tipoDeDLato.arbol>1,&$<tipoDeDato.arbol>3);}}
+
+comparacion: expresion comparador expresion; 
 
 comparador: COMP_IGUAL  {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
     | COMP_MAY          {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
