@@ -4,36 +4,14 @@
 #include <conio.h>
 #include <string.h>
 #include "y.tab.h"
+#include "arbol.c"
+
 int yystopparser=0;
 FILE *yyin;
 char *yytext;
 extern int yylineno;
 
-/**** STRUCT ARBOL ****/
-typedef struct _nodo {
-   char dato;
-   struct _nodo *derecho;
-   struct _nodo *izquierdo;
-} tipoNodo;
- 
-typedef tipoNodo *pNodo;
-typedef tipoNodo *Arbol;
 
-/**** INICIO VARIABLES  ARBOL****/
-
-pNodo programaPtr
-pNodo bloquePtr
-pNodo sentenciaPtr
-pNodo declaracionPtr
-pNodo lisDeclaracionPtr
-pNodo tipoVarPtr
-pNodo asigLineaPtr
-pNodo lisAsigPtr
-
-/**** FIN VARIABLES ****/
-
-void crearNodo(char dat,pNodo,pNodo);
-void crearHoja(char dat);
 
 %}
 
@@ -41,6 +19,8 @@ void crearHoja(char dat);
 int intVal;
 double realVal;
 char *strVal;
+ptrNodoArbol arbol;
+Dato tipoDeDato;
 }
 
 %token <strVal>ID <intVal>CTE_INT <strVal>CTE_STRING <realVal>CTE_REAL
@@ -53,24 +33,24 @@ char *strVal;
 %token INT DOUBLE STRING CONST
 
 %%
-programa: bloque {printf("Compilación OK\n");}
-bloque: sentencia 
-    | bloque sentencia;
+programa: bloque          {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1; ptrRaiz = $<tipoDeDato.arbol>1; }}
+bloque: sentencia         {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
+    | bloque sentencia;   
 
-sentencia: declaracion
-    | asignacion 
-    | seleccion
-    | repeticion
-    | print
-    | read;
+sentencia: declaracion    {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
+    | asignacion          {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
+    | seleccion           {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
+    | repeticion          {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
+    | print               {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
+    | read;               {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
 
-declaracion: VAR lista_declaracion ENDVAR;
+declaracion: VAR lista_declaracion ENDVAR; {{$<tipoDeDato.arbol>$ = insertarNodo("VAR",&$<tipoDeDato.arbol>1,&$<tipoDeDato.arbol>3);}}
 
 lista_declaracion: tipo_var CORCH_C DOSPUNTOS CORCH_A ID;
 
 lista_declaracion: tipo_var COMA lista_declaracion COMA ID;
 
-tipo_var: INT | DOUBLE | STRING;
+tipo_var: INT | DOUBLE | STRING; {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
 
 asignacion: const_nombre | asignacion_linea;
 
@@ -93,36 +73,37 @@ condicion: comparacion
 
 comparacion: expresion comparador expresion;
 
-comparador: COMP_IGUAL 
-    | COMP_MAY 
-    | COMP_MENOR 
-    | MAY_IGUAL 
-    | MEN_IGUAL;
+comparador: COMP_IGUAL  {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
+    | COMP_MAY          {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
+    | COMP_MENOR        {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
+    | MAY_IGUAL         {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
+    | MEN_IGUAL;        {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
 
 repeticion: WHILE P_A condicion P_C sentencia ENDWHILE 
     | WHILE P_A NOT condicion P_C sentencia ENDWHILE;
 
-expresion: expresion SUMA termino 
-    | expresion RESTA termino 
+expresion: expresion SUMA termino {{$<tipoDeDato.arbol>$ = insertarNodo("SUMA",&$<tipoDeDLato.arbol>1,&$<tipoDeDato.arbol>3);}}
+    | expresion RESTA termino     {{$<tipoDeDato.arbol>$ = insertarNodo("RESTA",&$<tipoDeDLato.arbol>1,&$<tipoDeDato.arbol>3);}}
     | termino;
 
-termino: termino MUL factor 
-    | termino DIV factor 
-    | factor;
+termino: termino MUL factor {{$<tipoDeDato.arbol>$ = insertarNodo("MUL",&$<tipoDeDLato.arbol>1,&$<tipoDeDato.arbol>3);}}
+    | termino DIV factor    {{$<tipoDeDato.arbol>$ = insertarNodo("DIV",&$<tipoDeDLato.arbol>1,&$<tipoDeDato.arbol>3);}}
+    | factor;               {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
 
-factor: expresion 
-    | ID 
-    | constante;
+factor: expresion         {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
+    | ID                  {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
+    | constante;          {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
 
 print: PRINT P_A contenido P_C;
 
-contenido: constante | ID;
+contenido: constante      {{$<tipoDeDato.arbol>$ = $<tipoDeDato.arbol>1;}}
+    | ID;                 {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
 
 read: READ ID;
 
-constante: CTE_INT 
-    | CTE_REAL 
-    | CTE_STRING;
+constante: CTE_INT        {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
+    | CTE_REAL            {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
+    | CTE_STRING;         {{$<tipoDeDato.arbol>$ = insertarHoja($1)}}
 
 %%
 
@@ -138,6 +119,8 @@ int main(int argc,char *argv[])
   yyparse();
   guardar_tabla_simbolos();
   printf("-------------------Listo TS-------------------\n");
+  printf("Recorriendo Arbol Post Order \n \n");
+  postOrder(ptrRaiz);
   }
   fclose(yyin);
   return 0;
@@ -151,12 +134,4 @@ int yyerror(char *errMessage)
    exit (1);
 }
 
-pNodo crearNodo(char dat , pNodo nodo1 , pNodo nodo2) {
-   pNodo padre = NULL;
-   pNodo actual = *a; 
-}
-
-pNodo crearHoja(char dat) {
-   
-}
 
