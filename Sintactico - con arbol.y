@@ -1,18 +1,24 @@
  %{
 #include <conio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include "y.tab.h"
+#include "estructuraArbol.h"
+#include "arbol.c"
 
 int yystopparser=0;
 FILE *yyin;
 char *yytext;
 extern int yylineno;
 
+char *_constante;
+NodoArbol *_ptrAsignacion;
+NodoArbol *_ptrAsignacionLinea;
+NodoArbol *_ptrSentencia;
+NodoArbol *_ptrArbol;
+NodoArbol *_ptrHoja;
+
 char * intAString(int numero);
 char * floatAString(double numero);
-
 
 %}
 
@@ -40,7 +46,7 @@ bloque: sentencia {printf("regla 2");printf("\n");}
     | bloque sentencia {printf("regla 3");printf("\n");};   
 
 sentencia: declaracion {printf("regla 4");printf("\n");}
-    | asignacion {printf("regla 5");printf("\n");}         
+    | asignacion {printf("regla 5");printf("\n"); _ptrSentencia = _ptrAsignacion;}         
     | seleccion {printf("regla 6");printf("\n");}       
     | repeticion {printf("regla 7");printf("\n");}      
     | print  {printf("regla 8");printf("\n");}             
@@ -57,16 +63,16 @@ tipo_var: INT {printf("regla 13");printf("\n");}
 	| STRING {printf("regla 15");printf("\n");}; 
 
 asignacion: const_nombre {printf("regla 16");printf("\n");}
-	| asignacion_linea {printf("regla 17");printf("\n");} 
-	| ID ASIG expresion {printf("regla 17-1 ID ASIG expresion");printf("\n"); validarDeclaracionExistente($1);};
+	| asignacion_linea {printf("regla 17");printf("\n");_ptrAsignacion = _ptrAsignacionLinea;} 
+	| ID ASIG expresion {_ptrAsignacion = crearNodo(":=", crearHoja($1), _ptrArbol);};
 
-const_nombre: CONST ID ASIG constante {printf("regla 18");printf("\n");};
+const_nombre: CONST ID ASIG constante {printf("regla 18");printf("\n"); _ptrAsignacion = crearNodo(":=", crearHoja($2), _ptrArbol);};
 
 asignacion_linea: CORCH_A lista_asignacion CORCH_C {printf("regla 19");printf("\n");};
 
-lista_asignacion: ID CORCH_C ASIG CORCH_A expresion {printf("regla 20");printf("\n");};
+lista_asignacion: ID CORCH_C ASIG CORCH_A expresion {printf("regla 20");printf("\n"); _ptrAsignacionLinea = crearNodo(":=", crearHoja($1), _ptrArbol);};
 
-lista_asignacion: ID COMA lista_asignacion COMA expresion {printf("regla 21");printf("\n");};
+lista_asignacion: ID COMA lista_asignacion COMA expresion {printf("regla 21");printf("\n"); _ptrAsignacionLinea = crearNodo(";", _ptrAsignacionLinea, crearNodo(":=",crearHoja($1), _ptrHoja));};
 
 seleccion: IF P_A condicion P_C LL_A sentencia LL_C ELSE LL_A sentencia LL_C {printf("regla 22");printf("\n");}
     | IF P_A condicion P_C LL_A sentencia LL_C {printf("regla 23");printf("\n");}
@@ -93,11 +99,12 @@ expresion: expresion SUMA termino {printf("regla 37");printf("\n");}
     | expresion RESTA termino     {printf("regla 38");printf("\n");}
     | termino {printf("regla 39");printf("\n");};
 
-termino: termino MUL factor {printf("regla 40");printf("\n");}
-    | termino DIV factor    {printf("regla 41");printf("\n");}
+termino: termino MUL factor {printf("regla 40");printf("\n");_ptrNodo = crearNodo("*", $1, $3);}
+    | termino DIV factor    {printf("regla 41");printf("\n");_ptrNodo = crearNodo("/", $1, $3);}
     | factor {printf("regla 42");printf("\n");};              
 
-factor: ID {printf("regla 44");printf("\n");}      
+factor: expresion   {printf("regla 43");printf("\n");}     
+    | ID           {printf("regla 44");printf("\n");}      
     | constante {printf("regla 45");printf("\n");};          
 
 print: PRINT P_A contenido P_C {printf("regla 46");printf("\n");};
@@ -107,9 +114,9 @@ contenido: constante     {printf("regla 47");printf("\n");}
 
 read: READ ID            {printf("regla 49");printf("\n");};
 
-constante: CTE_INT       {printf("regla 50");printf("\n");}
-    | CTE_REAL           {printf("regla 51");printf("\n");}    
-    | CTE_STRING         {printf("regla 52");printf("\n");};        
+constante: CTE_INT       {printf("regla 50");printf("\n"); _ptrHoja = crearHoja(intAString($1));}
+    | CTE_REAL           {printf("regla 51");printf("\n"); _ptrHoja = crearHoja(floatAString($1));}    
+    | CTE_STRING         {printf("regla 52");printf("\n"); _ptrHoja = crearHoja($1);};        
 
 %%
 
@@ -151,4 +158,3 @@ char * intAString(int numero)
     snprintf(buffer, 10, "%d", value);
     return buffer;
 };
-

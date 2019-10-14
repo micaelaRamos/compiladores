@@ -19,10 +19,11 @@ int cant_reg = 0;
 
 // Validaciones
 int validar_cte_int(int num);
-int validar_cte_string(char *cad);
+int validar_cte_string(char cad[35]);
 int validar_cte_real(float real);
 int validar_id(char *id);
-void mostrar_msje_error();
+void mostrar_msje_error(char *mensaje);
+int validarDeclaracionExistente(char * id);
 
 // Escritura en tabla de simbolos
 void insertar_reg_en_ts(char *nombre, char *tipo, char *valor, char *longitud);
@@ -43,7 +44,7 @@ LETRA			[a-zA-Z]
 ID				{LETRA}({LETRA}|{DIGITO}|_)*
 REAL      {DIGITO}+"."{DIGITO}+
 CTEINT       {DIGITO}+
-CTESTRING	\"{LETRA}+\"
+CTESTRING	\"[a-zA-Z0-9 ]+\"
 VALID_STRING    ({CARACTER}+|{DELIM})*
 COMENTARIO_S    --\/{VALID_STRING}\/--
 
@@ -84,10 +85,10 @@ COMENTARIO_S    --\/{VALID_STRING}\/--
 "const"		{ return CONST;}		
 
 
-{ID}			{ yylval.strVal = strdup(yytext); validar_id(yylval.strVal); return ID;}
-{CTESTRING}	{ yylval.strVal = strdup(yytext); validar_cte_string(yylval.strVal); insertar_ctestring_en_ts(yylval.strVal); return CTE_STRING;}
+{ID}			{ yylval.strVal = strdup(yytext); validar_id(yylval.strVal); insertar_id_en_ts(yylval.strVal); return ID;}
+{CTESTRING}		{ yylval.strVal = strdup(yytext); validar_cte_string(yylval.strVal); insertar_ctestring_en_ts(yylval.strVal); return CTE_STRING;}
 {CTEINT}		{ yylval.intVal = atoi(yytext); validar_cte_int(yylval.intVal); insertar_cteint_en_ts(yylval.intVal); return CTE_INT;}
-{REAL}		{ yylval.realVal = atof(yytext); validar_cte_real(yylval.realVal); insertar_ctereal_en_ts(yylval.realVal); return CTE_REAL;}
+{REAL}			{ yylval.realVal = atof(yytext); validar_cte_real(yylval.realVal); insertar_ctereal_en_ts(yylval.realVal); return CTE_REAL;}
 
 
 " "
@@ -104,10 +105,24 @@ int validar_cte_int(int num)
 	return 1;
 }
 
-int validar_cte_string(char *cad)
-{
-	if(strlen(cad) > 30)
+int validar_cte_string(char cad[35])
+{	
+	char cadena[35] = "";
+	int i, j=0;
+
+	for (i = 0; i < strlen(cad); i++)
+	{
+	    if (cad[i] != '"')
+	    {
+	        cadena[j] = cad[i];
+	        j++;
+	    }
+	}
+
+	if(strlen(cadena) > 30)
 		mostrar_msje_error("ERROR: Constante cadena supera la cantidad de caracteres maxima");
+
+	strcpy(cad, cadena);
 
 	return 1;
 }
@@ -160,9 +175,13 @@ int reg_existente(char *nom_reg)
 }
 
 int insertar_id_en_ts(char *id)
-{
-	if (reg_existente(id) == -1) 
-		insertar_reg_en_ts(id, "","","-");
+{	
+	char *nombre = (char*) malloc(sizeof(int)+1);
+	*nombre = '\0';
+	strcat(nombre, "_");
+	strcat(nombre, id);
+	if (reg_existente(nombre) == -1) 
+		insertar_reg_en_ts(nombre, "","","-");
 
 	return 1;
 }
@@ -215,12 +234,36 @@ int insertar_ctestring_en_ts(char *cad)
 	return 1;
 }
 
+int validarDeclaracionExistente(char *id) 
+{
+    // Validamos si la variable esta declarada con la tabla de simbolos
+    int i;
+	char *nombre = (char*) malloc(31 * sizeof(id));
+	*nombre = '\0';
+	strcat(nombre, "_");
+	strcat(nombre, id);
+
+    for (i = 0; i < cant_reg; i++)
+    {
+		printf("Entro a validar declaracion\n");
+		printf("Este es el reg: %s\n", tabla_simbolos[i].nombre);
+		
+        if(strcmp(tabla_simbolos[i].nombre, nombre) == 0)
+            return 1;
+    }
+
+    printf("Variable %s sin declarar en la linea %d\n", id, yylineno);
+	fprintf(stderr, "Fin de ejecucion.\n");
+	system ("Pause");
+	exit (1);
+}
+
 void guardar_tabla_simbolos()
 {
 	FILE *file = fopen("ts.txt", "a");
 	int i = 0;
 
-	if(file == NULL) 
+	if(file == NULL)
 	{
     	printf("ERROR: No se pudo abrir el txt de la tabla de simbolos\n");
 	}
