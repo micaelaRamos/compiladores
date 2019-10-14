@@ -5,16 +5,17 @@
 
 
 /* prototipos */
-ptrNodoArbol insertarNodo(char valor[255], ptrNodoArbol *ptrArbolIzq, ptrNodoArbol *ptrArbolDer);
-ptrNodoArbol insertarHoja(char valor[255]);
+ptrNodoArbol crearNodo(char valor[255], ptrNodoArbol *ptrArbolIzq, ptrNodoArbol *ptrArbolDer);
+ptrNodoArbol crearHoja(char valor[255]);
 void postOrden(ptrNodoArbol ptrArbol);
 void inicializarArbol();
 
 /*Variables*/
 ptrNodoArbol ptrRaiz;
 
+
 /* inserta un nodo dentro del Arbol */
-ptrNodoArbol insertarNodo( char valor[255], ptrNodoArbol *ptrArbolIzq, ptrNodoArbol *ptrArbolDer ) {
+ptrNodoArbol crearNodo( char valor[255], ptrNodoArbol *ptrArbolIzq, ptrNodoArbol *ptrArbolDer ) {
 
 
     /*Crea el nodo que va a devolver*/
@@ -30,7 +31,7 @@ ptrNodoArbol insertarNodo( char valor[255], ptrNodoArbol *ptrArbolIzq, ptrNodoAr
 
 }
 
-ptrNodoArbol insertarHoja(char valor[255]){
+ptrNodoArbol crearHoja(char valor[255]){
   /*Crea el nodo que va a devolver*/
   ptrNodoArbol ptrNodo;
   ptrNodo = malloc(sizeof(NodoArbol));
