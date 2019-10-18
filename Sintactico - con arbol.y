@@ -180,7 +180,14 @@ char * intAString(int numero)
 };
 
 void crearHojaIDAsignacion(char * id)
-{
+{   
+    if(_cantIds == 10)
+    {
+        printf("ERROR en la linea %d: excede la cantidad de variables posibles a asignar\n",yylineno);
+        fprintf(stderr, "Fin de ejecucion.\n");
+        system ("Pause");
+        exit (1);
+    }
     _listaIds[_cantIds] = crearHoja(id);
     _cantIds++;
 }
