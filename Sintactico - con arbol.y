@@ -15,6 +15,7 @@ NodoArbol *_ptrListaAsignacion;
 NodoArbol *_ptrAsignacionLinea;
 NodoArbol *_ptrSentencia;
 NodoArbol *_ptrArbol;
+NodoArbol *_ptrBloque;
 NodoArbol *_ptrHoja;
 NodoArbol *_ptrConst;
 NodoArbol *_ptrCont;
@@ -26,9 +27,17 @@ NodoArbol *_ptrComparacion;
 NodoArbol *_ptrCondicion;
 NodoArbol *_ptrSeleccion;
 NodoArbol *_ptrRepeticion;
+NodoArbol *_listaIds[10];
+NodoArbol *_listaFcts[10];
+
+int _cantIds = 0;
+int _cantFacts = 0;
 
 char * intAString(int numero);
 char * floatAString(double numero);
+NodoArbol * crearNodosAsignacion();
+void agregarFactorAVec(NodoArbol * ptr);
+void crearHojaIDAsignacion(char * id);
 
 %}
 
@@ -51,8 +60,8 @@ char *strVal;
 %token INT DOUBLE STRING CONST
 
 %%
-programa: bloque {printf("regla 1");printf("\n");};         
-bloque: sentencia {printf("regla 2");printf("\n");}        
+programa: bloque {printf("regla 1");printf("\n"); _ptrArbol = _ptrBloque; inOrder(_ptrArbol);};         
+bloque: sentencia {printf("regla 2");printf("\n"); _ptrBloque = _ptrSentencia;}        
     | bloque sentencia {printf("regla 3");printf("\n");};   
 
 sentencia: declaracion {printf("regla 4");printf("\n");}
@@ -73,16 +82,20 @@ tipo_var: INT {printf("regla 13");printf("\n");}
 	| STRING {printf("regla 15");printf("\n");}; 
 
 asignacion: const_nombre {printf("regla 16");printf("\n");}
-	| asignacion_linea {printf("regla 17");printf("\n");_ptrAsignacion = _ptrAsignacionLinea;} 
-	| ID ASIG expresion {printf("regla 18");printf("\n");_ptrAsignacion = crearNodo(":=", crearHoja($1), _ptrExpr);};
+	| asignacion_linea {printf("regla 17");printf("\n"); _ptrAsignacion = _ptrAsignacionLinea;} 
+	| ID ASIG expresion {printf("regla 18");printf("\n"); _ptrAsignacion = crearNodo(":=", crearHoja($1), _ptrExpr);};
 
 const_nombre: CONST ID ASIG constante {printf("regla 19");printf("\n"); _ptrAsignacion = crearNodo(":=", crearHoja($2), _ptrConst);};
 
-asignacion_linea: CORCH_A lista_asignacion CORCH_C {printf("regla 20");printf("\n"); _ptrAsignacionLinea = _ptrListaAsignacion};
+asignacion_linea: CORCH_A lista_variables CORCH_C ASIG CORCH_A lista_factores CORCH_C { printf("regla 20 \n"); _ptrAsignacionLinea = crearNodosAsignacion();};
 
-lista_asignacion: ID CORCH_C ASIG CORCH_A expresion {printf("regla 21");printf("\n"); _ptrListaAsignacion = crearNodo(":=", crearHoja($1), _ptrExpr);};
+lista_variables: lista_variables COMA ID { printf("regla 21 "); printf("%s \n", $3); crearHojaIDAsignacion($3);};
 
-lista_asignacion: ID COMA lista_asignacion COMA expresion {printf("regla 22");printf("\n"); _ptrListaAsignacion = crearNodo(";", _ptrListaAsignacion, crearNodo(":=",crearHoja($1), _ptrHoja));};
+lista_variables: ID { printf("regla 22 "); printf("%s \n", $1); crearHojaIDAsignacion($1);};
+
+lista_factores: lista_factores COMA factor { printf("regla 23 \n"); agregarFactorAVec(_ptrFactor);}
+
+lista_factores: factor { printf("regla 24 \n"); agregarFactorAVec(_ptrFactor);}
 
 seleccion: IF P_A condicion P_C LL_A sentencia LL_C ELSE LL_A sentencia LL_C {printf("regla 23");printf("\n");}
     | IF P_A condicion P_C LL_A sentencia LL_C {printf("regla 24");printf("\n");}
@@ -129,18 +142,19 @@ constante: CTE_INT       {printf("regla 49");printf("\n"); _ptrConst = crearHoja
 
 int main(int argc,char *argv[])
 {
+    inicializarArbol(_ptrArbol);
   
-  if ((yyin = fopen(argv[1], "rt")) == NULL)
-  {
-    printf("\nNo se puede abrir el archivo: %s\n", argv[1]);
-  }
-  else
-  {
-    yyparse();
-    guardar_tabla_simbolos();
-  }
-  fclose(yyin);
-  return 0;
+    if ((yyin = fopen(argv[1], "rt")) == NULL)
+    {
+        printf("\nNo se puede abrir el archivo: %s\n", argv[1]);
+    }
+    else
+    {
+        yyparse();
+        guardar_tabla_simbolos();
+    }
+    fclose(yyin);
+    return 0;
 }
 
 int yyerror(char *errMessage)
@@ -153,15 +167,42 @@ int yyerror(char *errMessage)
 
 char * floatAString(double numero)
 {
-    char* stringNum = (char*)malloc(sizeof(char)*(10));
-    sprintf(stringNum,"%f", numero);
-    return *stringNum;
+    char buffer[10];
+    sprintf(buffer, "%f", numero);
+    return buffer;
 };
 
 char * intAString(int numero)
 {
     char buffer[10];
-    int value = 234452;
-    snprintf(buffer, 10, "%d", value);
+    snprintf(buffer, 10, "%d", numero);
     return buffer;
 };
+
+void crearHojaIDAsignacion(char * id)
+{
+    _listaIds[_cantIds] = crearHoja(id);
+    _cantIds++;
+}
+
+void agregarFactorAVec(NodoArbol * ptr)
+{
+    _listaFcts[_cantFacts] = ptr;
+    _cantFacts++;
+}
+
+NodoArbol * crearNodosAsignacion() 
+{
+    int i;
+    NodoArbol *aux; 
+
+    aux = crearNodo(":=", _listaIds[0], _listaFcts[0]);
+
+    for(i = 1; i < _cantIds; i++)
+    {
+        _ptrListaAsignacion = crearNodo(":=", _listaIds[i], _listaFcts[i]);
+        aux = crearNodo(";", aux, _ptrListaAsignacion);
+    }
+
+    return aux;
+}
