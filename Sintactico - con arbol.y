@@ -29,6 +29,11 @@ NodoArbol *_ptrSeleccion;
 NodoArbol *_ptrRepeticion;
 NodoArbol *_listaIds[10];
 NodoArbol *_listaFcts[10];
+NodoArbol *_elseSelec;
+NodoArbol *_ptrCondCumplida;
+NodoArbol *_ptrPrint;
+NodoArbol *_ptrRead;
+char *_comparador;
 
 int _cantIds = 0;
 int _cantFacts = 0;
@@ -59,6 +64,12 @@ char *strVal;
 %left COMP_IGUAL MAY_IGUAL MEN_IGUAL COMP_MENOR COMP_MAY
 %token INT DOUBLE STRING CONST
 
+%type <strVal> COMP_IGUAL
+%type <strVal> MAY_IGUAL
+%type <strVal> MEN_IGUAL
+%type <strVal> COMP_MENOR
+%type <strVal> COMP_MAY
+
 %%
 programa: bloque {printf("regla 1");printf("\n"); _ptrArbol = _ptrBloque; inOrder(_ptrArbol);};         
 bloque: sentencia {printf("regla 2");printf("\n"); _ptrBloque = _ptrSentencia;}        
@@ -68,8 +79,8 @@ sentencia: declaracion {printf("regla 4");printf("\n");}
     | asignacion {printf("regla 5");printf("\n"); _ptrSentencia = _ptrAsignacion;}         
     | seleccion {printf("regla 6");printf("\n"); _ptrSentencia = _ptrSeleccion;}       
     | repeticion {printf("regla 7");printf("\n"); _ptrSentencia = _ptrRepeticion;}      
-    | print  {printf("regla 8");printf("\n");}             
-    | read {printf("regla 9");printf("\n");};              
+    | print  {printf("regla 8");printf("\n"); _ptrSentencia = _ptrPrint;}             
+    | read {printf("regla 9");printf("\n"); _ptrSentencia = _ptrRead;};              
 
 declaracion: VAR CORCH_A lista_declaracion CORCH_C ENDVAR {printf("regla 10");printf("\n");}; 
 
@@ -97,46 +108,49 @@ lista_factores: lista_factores COMA factor { printf("regla 23 \n"); agregarFacto
 
 lista_factores: factor { printf("regla 24 \n"); agregarFactorAVec(_ptrFactor);}
 
-seleccion: IF P_A condicion P_C LL_A sentencia LL_C ELSE LL_A sentencia LL_C {printf("regla 23");printf("\n");}
-    | IF P_A condicion P_C LL_A sentencia LL_C {printf("regla 24");printf("\n");}
-    | IF P_A NOT condicion P_C LL_A sentencia LL_C {printf("regla 25");printf("\n");}
-    | IF P_A NOT condicion P_C LL_A sentencia LL_C ELSE LL_A sentencia LL_C {printf("regla 26");printf("\n");};
+seleccion: IF P_A condicion P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 25");printf("\n"); _ptrSeleccion = crearNodo("else", crearNodo("if", _ptrCondicion, _ptrCondCumplida), _ptrBloque);}
+    | IF P_A condicion P_C LL_A cond_cumplida LL_C {printf("regla 26");printf("\n"); _ptrSeleccion = crearNodo("if", _ptrCondicion, _ptrCondCumplida);}
+    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C {printf("regla 27");printf("\n"); _ptrSeleccion = crearNodo("if", crearNodo("not", _ptrCondicion, NULL), _ptrCondCumplida);}
+    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 28");printf("\n");  _ptrSeleccion = crearNodo("else", crearNodo("if", crearNodo("not", _ptrCondicion, NULL), _ptrCondCumplida), _ptrBloque);};
 
+else_seleccion: ELSE LL_A bloque LL_C { printf("Regla elseSeleccion \n"); _elseSelec = _ptrBloque;};
 
-condicion: comparacion {printf("regla 27");printf("\n"); _ptrCondicion = _ptrComparacion;}
-    | condicion AND comparacion  {printf("regla 28");printf("\n"); _ptrCondicion = crearNodo("and", _ptrCondicion, _ptrComparacion);}
-    | condicion OR comparacion {printf("regla 29");printf("\n"); _ptrCondicion = crearNodo("or", _ptrCondicion, _ptrComparacion);};  
+cond_cumplida: bloque { printf("Regla cond cumplida \n"); _ptrCondCumplida = _ptrBloque;};
 
-comparacion: expresion comparador expresion {printf("regla 30");printf("\n");}; //pensar bien esto 
+condicion: comparacion {printf("regla 29");printf("\n"); _ptrCondicion = _ptrComparacion;}
+    | condicion AND comparacion  {printf("regla 30");printf("\n"); _ptrCondicion = crearNodo("and", _ptrCondicion, _ptrComparacion);}
+    | condicion OR comparacion {printf("regla 31");printf("\n"); _ptrCondicion = crearNodo("or", _ptrCondicion, _ptrComparacion);};  
 
-comparador: COMP_IGUAL {printf("regla 31");printf("\n");}
-    | COMP_MAY {printf("regla 32");printf("\n");}         
-    | COMP_MENOR {printf("regla 33");printf("\n");}        
-    | MAY_IGUAL {printf("regla 34");printf("\n");}        
-    | MEN_IGUAL {printf("regla 35"); printf("\n");};       
+comparacion: ID comparador factor {printf("regla 32");printf("\n"); _ptrComparacion = crearNodo(_comparador, crearHoja($1), _ptrFactor);};
 
-repeticion: WHILE P_A condicion P_C sentencia ENDWHILE {printf("regla 36");printf("\n");}
-    | WHILE P_A NOT condicion P_C sentencia ENDWHILE {printf("regla 37");printf("\n");};
+comparador: COMP_IGUAL {printf("regla 33");printf("\n"); _comparador = "==";}
+    | COMP_MAY {printf("regla 34");printf("\n"); _comparador = ">";}         
+    | COMP_MENOR {printf("regla 35");printf("\n"); _comparador = "<";}        
+    | MAY_IGUAL {printf("regla 36");printf("\n"); _comparador = ">=";}        
+    | MEN_IGUAL {printf("regla 37"); printf("\n"); _comparador = "<=";};
 
-expresion: expresion SUMA termino {printf("regla 38");printf("\n"); _ptrExpr = crearNodo("+", _ptrExpr, _ptrTermino);}
-    | expresion RESTA termino     {printf("regla 39");printf("\n"); _ptrExpr = crearNodo("-", _ptrExpr, _ptrTermino);}
-    | termino {printf("regla 40");printf("\n"); _ptrExpr = _ptrTermino;};
+repeticion: WHILE P_A condicion P_C bloque ENDWHILE {printf("regla 38");printf("\n"); _ptrRepeticion = crearNodo("while", _ptrCondicion, _ptrBloque);}
+    | WHILE P_A NOT condicion P_C bloque ENDWHILE {printf("regla 39");printf("\n"); _ptrRepeticion = crearNodo("while", crearNodo("not", _ptrCondicion, NULL), _ptrBloque);};
 
-termino: termino MUL factor {printf("regla 41");printf("\n");_ptrTermino = crearNodo("*", _ptrTermino, _ptrFactor);}
-    | termino DIV factor    {printf("regla 42");printf("\n");_ptrTermino = crearNodo("/", _ptrTermino, _ptrFactor);}
-    | factor {printf("regla 43");printf("\n");_ptrTermino = _ptrFactor;};              
+expresion: expresion SUMA termino {printf("regla 40");printf("\n"); _ptrExpr = crearNodo("+", _ptrExpr, _ptrTermino);}
+    | expresion RESTA termino     {printf("regla 41");printf("\n"); _ptrExpr = crearNodo("-", _ptrExpr, _ptrTermino);}
+    | termino {printf("regla 42");printf("\n"); _ptrExpr = _ptrTermino;};
 
-factor: P_A expresion P_C {printf("regla 44");printf("\n"); _ptrFactor = _ptrExpr;}     
-    | ID           {printf("regla 45");printf("\n"); _ptrFactor = crearHoja($1);}      
-    | constante {printf("regla 46");printf("\n"); _ptrFactor = _ptrConst;};          
+termino: termino MUL factor {printf("regla 43");printf("\n");_ptrTermino = crearNodo("*", _ptrTermino, _ptrFactor);}
+    | termino DIV factor    {printf("regla 44");printf("\n");_ptrTermino = crearNodo("/", _ptrTermino, _ptrFactor);}
+    | factor {printf("regla 45");printf("\n");_ptrTermino = _ptrFactor;};              
 
-print: PRINT P_A factor P_C {printf("regla 47");printf("\n");};            
+factor: P_A expresion P_C {printf("regla 46");printf("\n"); _ptrFactor = _ptrExpr;}     
+    | ID           {printf("regla 47");printf("\n"); _ptrFactor = crearHoja($1);}      
+    | constante {printf("regla 48");printf("\n"); _ptrFactor = _ptrConst;};          
 
-read: READ ID            {printf("regla 48");printf("\n");};
+print: PRINT P_A factor P_C {printf("regla 49");printf("\n"); _ptrPrint = crearNodo("print", _ptrFactor, NULL);};            
 
-constante: CTE_INT       {printf("regla 49");printf("\n"); _ptrConst = crearHoja(intAString($1));}
-    | CTE_REAL           {printf("regla 50");printf("\n"); _ptrConst = crearHoja(floatAString($1));}    
-    | CTE_STRING         {printf("regla 51");printf("\n"); _ptrConst = crearHoja($1);};        
+read: READ ID            {printf("regla 50");printf("\n"); _ptrRead = crearNodo("read", crearHoja($2), NULL);};
+
+constante: CTE_INT       {printf("regla 51");printf("\n"); _ptrConst = crearHoja(intAString($1));}
+    | CTE_REAL           {printf("regla 52");printf("\n"); _ptrConst = crearHoja(floatAString($1));}    
+    | CTE_STRING         {printf("regla 53");printf("\n"); _ptrConst = crearHoja($1);};        
 
 %%
 
