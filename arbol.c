@@ -2,20 +2,15 @@
 #include <stdlib.h>
 #include "estructuraArbol.h"
 
-
-
 /* prototipos */
-ptrNodoArbol crearNodo(char valor[255], ptrNodoArbol *ptrArbolIzq, ptrNodoArbol *ptrArbolDer);
+ptrNodoArbol crearNodo(char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol ptrArbolDer);
 ptrNodoArbol crearHoja(char valor[255]);
 void postOrden(ptrNodoArbol ptrArbol);
 void inicializarArbol();
 
-/*Variables*/
-ptrNodoArbol ptrRaiz;
-
 
 /* inserta un nodo dentro del Arbol */
-ptrNodoArbol crearNodo( char valor[255], ptrNodoArbol *ptrArbolIzq, ptrNodoArbol *ptrArbolDer ) {
+ptrNodoArbol crearNodo( char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol ptrArbolDer ) {
 
 
     /*Crea el nodo que va a devolver*/
@@ -24,8 +19,8 @@ ptrNodoArbol crearNodo( char valor[255], ptrNodoArbol *ptrArbolIzq, ptrNodoArbol
     /*Asigno los parametros*/
     strcpy((ptrNodo)->valor,valor);
     printf("%s" "%s" "%s\n", "Consola: Guardando Valor ", (ptrNodo)->valor, " en el nodo");
-    (ptrNodo)->ptrIzq = *ptrArbolIzq;
-    (ptrNodo)->prtDer = *ptrArbolDer;
+    (ptrNodo)->ptrIzq = ptrArbolIzq;
+    (ptrNodo)->prtDer = ptrArbolDer;
 
     return ptrNodo;
 
@@ -48,13 +43,22 @@ ptrNodoArbol crearHoja(char valor[255]){
 void postOrder(ptrNodoArbol ptrArbol)
 {
  /* si el árbol no está vacío, entonces recórrelo */
- if (ptrArbol != NULL) {
- postOrder(ptrArbol->ptrIzq);
- postOrder(ptrArbol->prtDer);
- printf("\t Valor de nodo: %s\n", ptrArbol->valor);
- }
+  if (ptrArbol != NULL) {
+    postOrder(ptrArbol->ptrIzq);
+    postOrder(ptrArbol->prtDer);
+    printf("\t Valor de nodo: %s\n", ptrArbol->valor);
+  }
 }
 
-void inicializarArbol(){
-  ptrRaiz = NULL; /* árbol inicialemnte vacío */
+void inOrder(ptrNodoArbol ptrArbol)
+{
+   if (ptrArbol != NULL) {
+    inOrder(ptrArbol->ptrIzq);
+    printf("\t Valor de nodo: %s\n", ptrArbol->valor);
+    inOrder(ptrArbol->prtDer);
+  }
+}
+
+void inicializarArbol(ptrNodoArbol arbol){
+  arbol = NULL; /* árbol inicialemnte vacío */
 }
