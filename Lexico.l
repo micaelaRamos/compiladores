@@ -225,7 +225,6 @@ int reg_existente(char *nom_reg)
 
 int reg_tiene_tipo(int registro)
 {	
-	printf("%s\n",tabla_simbolos[registro].tipo);
 	if (strcmpi("", tabla_simbolos[registro].tipo) == 0){
 		return 0;
 	}
@@ -303,10 +302,7 @@ int validarDeclaracionExistente(char *id)
 	strcat(nombre, id);
 
     for (i = 0; i < cant_reg; i++)
-    {
-		printf("Entro a validar declaracion\n");
-		printf("Este es el reg: %s\n", tabla_simbolos[i].nombre);
-		
+    {	
         if(strcmp(tabla_simbolos[i].nombre, nombre) == 0)
             return 1;
     }
