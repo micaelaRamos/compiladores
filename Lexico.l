@@ -16,6 +16,7 @@ struct tabla_simbolos_reg {
 
 struct tabla_simbolos_reg tabla_simbolos[50];
 int cant_reg = 0;
+int regTiposVariables = 0;
 
 // Validaciones
 int validar_cte_int(int num);
@@ -24,15 +25,20 @@ int validar_cte_real(float real);
 int validar_id(char *id);
 void mostrar_msje_error(char *mensaje);
 int validarDeclaracionExistente(char * id);
+int verificarIdDeclarado(char id[255]);
+int reg_tiene_tipo(int registro);
+char* validarAsignacionCorrecta(char * id , char * constante);
 
 // Escritura en tabla de simbolos
 void insertar_reg_en_ts(char *nombre, char *tipo, char *valor, char *longitud);
+void insertar_tipo_en_ts(char* tiposVariables[20], char *id);
 int reg_existente(char *nom_reg);
 int insertar_id_en_ts(char *cad);
 int insertar_cteint_en_ts(int entero);
 int insertar_ctereal_en_ts(float real);
 int insertar_ctechar_en_ts(char *cad);
 void guardar_tabla_simbolos();
+
 
 %}
 
@@ -164,6 +170,49 @@ void insertar_reg_en_ts(char *nombre, char *tipo, char *valor, char *longitud)
 	cant_reg++;
 }
 
+void insertar_tipo_en_ts(char* tiposVariables[20], char *id)
+{	
+	char *idABuscar = (char*) malloc(sizeof(int)+1);
+	*idABuscar = '\0';
+	strcat(idABuscar, "_");
+	strcat(idABuscar, id);
+
+	int registro = reg_existente(idABuscar);
+	if(registro != -1){
+		tabla_simbolos[registro].tipo = tiposVariables[regTiposVariables];
+		regTiposVariables++;
+	}
+}
+
+int verificarIdDeclarado(char id[255]){
+	char *idABuscar = (char*) malloc(sizeof(int)+1);
+	*idABuscar = '\0';
+	strcat(idABuscar, "_");
+	strcat(idABuscar, id);
+	int registro = reg_existente(idABuscar);
+	if(registro != -1) {
+		 if(reg_tiene_tipo(registro)){
+		 	return 1;
+		 }
+	}
+	return 0;
+}
+
+char* validarAsignacionCorrecta(char * id , char * constante){
+	char *idABuscar = (char*) malloc(sizeof(int)+1);
+	*idABuscar = '\0';
+	strcat(idABuscar, "_");
+	strcat(idABuscar, id);
+	int registroId = reg_existente(idABuscar);
+	char *constABuscar = (char*) malloc(sizeof(int)+1);
+	*constABuscar = '\0';
+	strcat(constABuscar, "_");
+	strcat(constABuscar, constante);
+	int registroConst = reg_existente(constABuscar);
+	char* resultado = strstr(tabla_simbolos[registroConst].tipo,tabla_simbolos[registroId].tipo);
+	return resultado;
+}
+
 int reg_existente(char *nom_reg)
 {
 	int i;
@@ -172,6 +221,16 @@ int reg_existente(char *nom_reg)
 			return i;
 	}
 	return -1;
+}
+
+int reg_tiene_tipo(int registro)
+{	
+	printf("%s\n",tabla_simbolos[registro].tipo);
+	if (strcmpi("", tabla_simbolos[registro].tipo) == 0){
+		return 0;
+	}
+
+	return 1;
 }
 
 int insertar_id_en_ts(char *id)
