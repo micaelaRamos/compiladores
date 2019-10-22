@@ -75,7 +75,7 @@ char *strVal;
 %%
 programa: bloque {printf("regla 1");printf("\n"); _ptrArbol = _ptrBloque; inOrder(_ptrArbol);};         
 bloque: sentencia {printf("regla 2");printf("\n"); _ptrBloque = _ptrSentencia;}        
-    | bloque sentencia {printf("regla 3");printf("\n");};   
+    | bloque sentencia {printf("regla 3");printf("\n"); _ptrArbol = crearNodo("main", _ptrBloque, _ptrSentencia);};   
 
 sentencia: declaracion {printf("regla 4");printf("\n");}
     | asignacion {printf("regla 5");printf("\n"); _ptrSentencia = _ptrAsignacion;}         
@@ -200,7 +200,7 @@ void crearHojaIDAsignacion(char * id)
     
     int idDeclarado = verificarIdDeclarado(id);
     if(!idDeclarado){
-        printf("ERROR id %s no declarado " , id);
+        printf("ERROR variable %s no declarada. " , id);
         fprintf(stderr, "Fin de ejecucion.\n");
         system ("Pause");
         exit (1);
@@ -228,21 +228,13 @@ NodoArbol * crearNodosAsignacion()
     int i;
     NodoArbol *aux;
 
-    for(i = 0; i < _cantIds; i++)
+    aux = crearNodo(":=", _listaIds[0], _listaFcts[0]);
+
+    for(i = 1; i < _cantIds; i++)
     {   
-        int resultadoAsignacion = (int) validarAsignacionCorrecta(_listaIds[i]->valor,_listaFcts[i]->valor);
-        if(resultadoAsignacion == 0){
-            printf("ERROR asignacion incorrecta, verifique la asignacion en la variable %s " , _listaIds[i]->valor);
-            fprintf(stderr, "Fin de ejecucion.\n");
-            system ("Pause");
-            exit (1);
-        }
-        if(i == 0){
-            aux = crearNodo(":=", _listaIds[i], _listaFcts[i]);
-        } else {
-            _ptrListaAsignacion = crearNodo(":=", _listaIds[i], _listaFcts[i]);
-            aux = crearNodo(";", aux, _ptrListaAsignacion);
-        }
+        _ptrListaAsignacion = crearNodo(":=", _listaIds[i], _listaFcts[i]);
+        aux = crearNodo(";", aux, _ptrListaAsignacion);
+        
     }
 
     return aux;
