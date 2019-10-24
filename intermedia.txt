@@ -1,0 +1,1 @@
+var3 := 5 main var3 == 2 if var3 := 1 else var3 := 5 

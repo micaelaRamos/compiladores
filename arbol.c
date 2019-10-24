@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "estructuraArbol.h"
 
+FILE *file;
+
 /* prototipos */
 ptrNodoArbol crearNodo(char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol ptrArbolDer);
 ptrNodoArbol crearHoja(char valor[255]);
@@ -51,14 +53,28 @@ void postOrder(ptrNodoArbol ptrArbol)
 }
 
 void inOrder(ptrNodoArbol ptrArbol)
-{
+{ 
    if (ptrArbol != NULL) {
     inOrder(ptrArbol->ptrIzq);
-    printf("\t Valor de nodo: %s\n", ptrArbol->valor);
+    fprintf(file, "%s ", ptrArbol->valor);
+    printf("%s ", ptrArbol->valor);
     inOrder(ptrArbol->prtDer);
   }
 }
 
 void inicializarArbol(ptrNodoArbol arbol){
   arbol = NULL; /* árbol inicialemnte vacío */
+}
+
+void guardarArbol(NodoArbol * arbol) {
+    NodoArbol* aux = arbol;
+    file = fopen("intermedia.txt", "w");
+    if (file == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    inOrder(aux);
+    fclose(file);
 }

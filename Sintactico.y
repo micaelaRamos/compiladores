@@ -48,6 +48,7 @@ char * floatAString(double numero);
 NodoArbol * crearNodosAsignacion();
 void agregarFactorAVec(NodoArbol * ptr);
 void crearHojaIDAsignacion(char * id);
+NodoArbol * crearNodosDeclaracion();
 
 %}
 
@@ -76,7 +77,7 @@ char *strVal;
 %type <strVal> COMP_MAY
 
 %%
-programa: bloque {printf("regla 1");printf("\n"); _ptrArbol = _ptrBloque; inOrder(_ptrArbol);};         
+programa: bloque {printf("regla 1");printf("\n"); _ptrArbol = _ptrBloque; guardarArbol(_ptrArbol);};         
 bloque: sentencia {printf("regla 2");printf("\n"); _ptrBloque = _ptrSentencia;}        
     | bloque sentencia {printf("regla 3");printf("\n"); _ptrBloque = crearNodo("main", _ptrBloque, _ptrSentencia);};   
 
@@ -89,7 +90,7 @@ sentencia: declaracion {printf("regla 4");printf("\n"); _ptrSentencia = _ptrDecl
 
 declaracion: VAR CORCH_A lista_tipo_variables CORCH_C DOSPUNTOS CORCH_A lista_declaracion CORCH_C ENDVAR {printf("regla 10 \n"); _ptrDeclaracion = crearNodosDeclaracion();}; 
 
-lista_declaracion: lista_declaracion COMA ID {printf("regla 11");printf("\n");_idsADeclarar[_cantIdsADec] = $<strVal>5; _cantIdsADec++;}; 
+lista_declaracion: lista_declaracion COMA ID {printf("regla 11");printf("\n");_idsADeclarar[_cantIdsADec] = $<strVal>3; _cantIdsADec++;}; 
 
 lista_declaracion: ID {printf("regla 12\n"); _idsADeclarar[_cantIdsADec] = $<strVal>1; _cantIdsADec++;};
 
@@ -243,10 +244,10 @@ NodoArbol * crearNodosDeclaracion()
         exit (1);
 	}
 
-	for(i = 0; i < _tiposVariables; i++)
+	for(i = 0; i < _registroTiposVariables; i++)
 	{
 		insertar_tipo_en_ts(_tiposVariables,_idsADeclarar[i]);
-		_ptrDeclaracion = crearNodo("is", _idsADeclarar[i], _tiposVariables[i]);//revisar
+		_ptrDeclaracion = crearNodo("is", crearHoja(_idsADeclarar[i]), crearHoja(_tiposVariables[i]));
 		if(i == 0)
 		{
 			aux = _ptrDeclaracion;
@@ -256,6 +257,8 @@ NodoArbol * crearNodosDeclaracion()
 			aux = crearNodo(";", aux, _ptrDeclaracion);
 		}
 	}
+
+    return aux;
 }
 
 NodoArbol * crearNodosAsignacion() 
