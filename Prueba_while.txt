@@ -1,0 +1,8 @@
+var
+[int, string, int] : [var1, var2, var3]
+endvar
+[var1, var2, var3] := [1, "hola", 73]
+
+while(var3 == 2) {
+   var3 := 2
+}
