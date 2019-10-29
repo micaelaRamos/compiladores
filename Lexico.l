@@ -42,8 +42,8 @@ void guardar_tabla_simbolos();
 
 %}
 
-%option noyywrap  
-%option yylineno 
+%option noyywrap
+%option yylineno
 
 DIGITO			[0-9]
 LETRA			[a-zA-Z]
@@ -88,8 +88,8 @@ COMENTARIO_S    --\/{VALID_STRING}\/--
 "["			{ return CORCH_A;}
 "]"			{ return CORCH_C;}
 ":"			{ return DOSPUNTOS;}
-"const"		{ return CONST;}		
-
+"const"		{ return CONST;}
+"let"			{return LET;}
 
 {ID}			{ yylval.strVal = strdup(yytext); validar_id(yylval.strVal); insertar_id_en_ts(yylval.strVal); return ID;}
 {CTESTRING}		{ yylval.strVal = strdup(yytext); validar_cte_string(yylval.strVal); insertar_ctestring_en_ts(yylval.strVal); return CTE_STRING;}
@@ -112,7 +112,7 @@ int validar_cte_int(int num)
 }
 
 int validar_cte_string(char cad[35])
-{	
+{
 	char cadena[35] = "";
 	int i, j=0;
 
@@ -160,18 +160,18 @@ void mostrar_msje_error(char *mensaje)
 void insertar_reg_en_ts(char *nombre, char *tipo, char *valor, char *longitud)
 {
 	struct tabla_simbolos_reg reg;
-	
+
 	reg.nombre = nombre;
 	reg.tipo = tipo;
 	reg.valor = valor;
 	reg.longitud = longitud;
-	
+
 	tabla_simbolos[cant_reg] = reg;
 	cant_reg++;
 }
 
 void insertar_tipo_en_ts(char* tiposVariables[20], char *id)
-{	
+{
 	char *idABuscar = (char*) malloc(sizeof(int)+1);
 	*idABuscar = '\0';
 	strcat(idABuscar, "_");
@@ -228,7 +228,7 @@ int reg_existente(char *nom_reg)
 }
 
 int reg_tiene_tipo(int registro)
-{	
+{
 	if (strcmpi("", tabla_simbolos[registro].tipo) == 0){
 		return 0;
 	}
@@ -237,12 +237,12 @@ int reg_tiene_tipo(int registro)
 }
 
 int insertar_id_en_ts(char *id)
-{	
+{
 	char *nombre = (char*) malloc(sizeof(int)+1);
 	*nombre = '\0';
 	strcat(nombre, "_");
 	strcat(nombre, id);
-	if (reg_existente(nombre) == -1) 
+	if (reg_existente(nombre) == -1)
 		insertar_reg_en_ts(nombre, "","","-");
 
 	return 1;
@@ -257,7 +257,7 @@ int insertar_cteint_en_ts(int entero)
 	*nombre = '\0';
 	strcat(nombre, "_");
 	strcat(nombre, valor);
-	
+
 	if (reg_existente(nombre) == -1)
 		insertar_reg_en_ts(nombre, "CTE_INT", valor, "-");
 
@@ -273,7 +273,7 @@ int insertar_ctereal_en_ts(float real)
 	*nombre = '\0';
 	strcat(nombre, "_");
 	strcat(nombre, valor);
-	
+
 	if (reg_existente(nombre) == -1)
 		insertar_reg_en_ts(nombre, "CTE_REAL", valor, "-");
 
@@ -287,16 +287,16 @@ int insertar_ctestring_en_ts(char *cad)
 	strcat(nombre, "_");
 	strcat(nombre, cad);
 
-	char *longitud = (char*) malloc(10*sizeof(char));	
+	char *longitud = (char*) malloc(10*sizeof(char));
 	itoa(strlen(cad), longitud, 10);
-	
+
 	if (reg_existente(nombre) == -1)
 		insertar_reg_en_ts(nombre, "CTE_STRING", cad, longitud);
 
 	return 1;
 }
 
-int validarDeclaracionExistente(char *id) 
+int validarDeclaracionExistente(char *id)
 {
     // Validamos si la variable esta declarada con la tabla de simbolos
     int i;
@@ -306,7 +306,7 @@ int validarDeclaracionExistente(char *id)
 	strcat(nombre, id);
 
     for (i = 0; i < cant_reg; i++)
-    {	
+    {
         if(strcmp(tabla_simbolos[i].nombre, nombre) == 0)
             return 1;
     }
@@ -326,17 +326,12 @@ void guardar_tabla_simbolos()
 	{
     	printf("ERROR: No se pudo abrir el txt de la tabla de simbolos\n");
 	}
-	else 
+	else
 	{
-		for (i; i < cant_reg; i++) 
+		for (i; i < cant_reg; i++)
 		{
 			fprintf(file, "%s\t%s\t%s\t%s\n", tabla_simbolos[i].nombre, tabla_simbolos[i].tipo, tabla_simbolos[i].valor, tabla_simbolos[i].longitud);
-		}		
+		}
 		fclose(file);
 	}
 }
-
-
-
-
-
