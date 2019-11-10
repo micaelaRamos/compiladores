@@ -3,6 +3,7 @@
 #include <string.h>
 #include "y.tab.h"
 #include "arbol.c"
+#include "assembler.c"
 
 int yystopparser=0;
 FILE *yyin;
@@ -50,6 +51,8 @@ void agregarFactorAVec(NodoArbol * ptr);
 void crearHojaIDAsignacion(char * id);
 NodoArbol * crearNodosDeclaracion();
 
+FILE* archivoAssembler;
+
 %}
 
 %union {
@@ -77,7 +80,7 @@ char *strVal;
 %type <strVal> COMP_MAY
 
 %%
-programa: bloque {printf("regla 1");printf("\n"); _ptrArbol = _ptrBloque; guardarArbol(_ptrArbol);};         
+programa: bloque {printf("regla 1");printf("\n"); _ptrArbol = _ptrBloque; guardarArbol(_ptrArbol); archivoAssembler = abrirArchivoAssembler(); procesarArbolParaAssembler(&_ptrArbol, archivoAssembler); crearAssembler(archivoAssembler); cerrarArchivoAssembler(archivoAssembler);};         
 bloque: sentencia {printf("regla 2");printf("\n"); _ptrBloque = _ptrSentencia;}        
     | bloque sentencia {printf("regla 3");printf("\n"); _ptrBloque = crearNodo("main", _ptrBloque, _ptrSentencia);};   
 
