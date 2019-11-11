@@ -313,41 +313,47 @@ void operacionAssembler(tArbol *pa, char* operacion){
   char aux[10];
   char aux2[10];
   struct_assembler instruccion;
-  int registro = buscar_registro_en_ts((*pa)->valor);
 
-  if( (tabla_simbolos[registro].tipo == "INT")||(tabla_simbolos[registro].tipo == "CTE_INT")){
+  // primero lo hago con el valor de la izquierda
+  int registro = buscar_registro_en_ts((*pa)->prtIzq->valor);
+  if(!strcmp(tabla_simbolos[registro].tipo == "INT")|| !strcmp(tabla_simbolos[registro].tipo == "CTE_INT")){
     strcpy(instruccion.operacion,"FILD");
-  } else if ((tabla_simbolos[registro].tipo == "REAL")||(tabla_simbolos[registro].tipo == "CTE_REAL")){
+  } else if (!strcmp(tabla_simbolos[registro].tipo == "REAL")|| !strcmp(tabla_simbolos[registro].tipo == "CTE_REAL")){
     strcpy(instruccion.operacion,"FLD");
   } else{
     strcpy(instruccion.operacion,"STRING");
   }
   
-  
-  if( ((*pa)->prtIzq->info.entero != 0)){    
-    sprintf(instruccion.reg1,"%d", (*pa)->prtIzq->info.entero);
+  /* creo que no es necesario ya que manejamos todo como char, podemos poner el valo directamente
+  if(!strcmp(tipo_dato,"INT")){    
+    sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->info.entero);
   } else if ( ((*pa)->prtIzq->info.flotante != 0)){    
-    sprintf(instruccion.reg1,"%f", (*pa)->prtIzq->info.flotante);
+    sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->info.flotante);
   } else {
     if((*pa)->prtIzq->valor[0] == '@'){
       strcpy(instruccion.reg1, (*pa)->prtIzq->valor);
     } else {
       sprintf(instruccion.reg1,"_%s", (*pa)->prtIzq->valor);
     } 
-  }
+  }*/
+  sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->valor);
   
   strcpy(instruccion.reg2,"");
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
 
-  if( ((*pa)->prtDer->info.tipoDato == Integer)||((*pa)->prtDer->info.tipoDato == CteInt)){
+  // segundo lo hago con el valor de la derecha
+  registro = buscar_registro_en_ts((*pa)->prtDer->valor);
+  if(!strcmp(tabla_simbolos[registro].tipo, "INT")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_INT")){
+    tipo_dato = "INT";
     strcpy(instruccion.operacion,"FILD");
-  } else if(((*pa)->prtDer->info.tipoDato == Float)||((*pa)->prtDer->info.tipoDato == CteFloat)){
+  } else if (!strcmp(tabla_simbolos[registro].tipo, "REAL")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_REAL")){
     strcpy(instruccion.operacion,"FLD");
   } else{
     strcpy(instruccion.operacion,"STRING");
   }
-
+  
+ /* idem arriba
   if ( ((*pa)->prtDer->info.entero != 0)){
     sprintf(instruccion.reg1, "%d", (*pa)->prtDer->info.entero);
   } else if ( ((*pa)->prtDer->info.flotante != 0)) {
@@ -358,7 +364,8 @@ void operacionAssembler(tArbol *pa, char* operacion){
     } else {
       sprintf(instruccion.reg1,"_%s", (*pa)->prtDer->valor);
     } 
-  }
+  }*/
+  sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
 
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
@@ -366,14 +373,14 @@ void operacionAssembler(tArbol *pa, char* operacion){
   strcpy(instruccion.operacion, operacion);
   strcpy(instruccion.reg1,"");
   strcpy(instruccion.reg2,"");
-    vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
+  vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
 
   contAssembler++;
   strcpy(aux, "@aux");
   sprintf(aux2, "%d", contAssembler);
   strcat(aux, aux2);
-  insertarEnTabla(aux,indice_tabla,(*pa)->info.tipoDato);
+  //insertarEnTabla(aux,indice_tabla,(*pa)->info.tipoDato);
 
   strcpy(instruccion.operacion, "FSTP");
   strcpy(instruccion.reg2,"");
@@ -382,31 +389,27 @@ void operacionAssembler(tArbol *pa, char* operacion){
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
 
-    strcpy(instruccion.operacion, "FFREE");
-    strcpy(instruccion.reg1,"");
+  strcpy(instruccion.operacion, "FFREE");
+  strcpy(instruccion.reg1,"");
   strcpy(instruccion.reg2,"");
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
     
-    strcpy(instruccion.operacion, "");  
+  strcpy(instruccion.operacion, "");  
   (*pa)->prtDer = NULL;
   (*pa)->prtIzq = NULL;
   strcpy((*pa)->valor,auxAssembler);
-  (*pa)->info.entero = 0;
-  (*pa)->info.flotante = 0; 
 }
 
 void comparacionAssembler(tArbol *pa, char* comparador){
   struct_assembler instruccion;
-
-  if( ((*pa)->prtIzq->info.entero != 0)){
+  int registro = buscar_registro_en_ts((*pa)->prtIzq->valor);
+  if(!strcmp(tabla_simbolos[registro].tipo,"INT")){
     strcpy(instruccion.operacion, "FILD");
-    sprintf(instruccion.reg1,"%d", (*pa)->prtIzq->info.entero);
-  } else if ( ((*pa)->prtIzq->info.flotante != 0)){
+  } else if (!strcmp(tabla_simbolos[registro].tipo,"FLOAT")){
     strcpy(instruccion.operacion, "FLD");
-    sprintf(instruccion.reg1,"%f", (*pa)->prtIzq->info.flotante);
   } else{
-    if((*pa)->prtIzq->valor[0] == '@'){
+    /*if((*pa)->prtIzq->valor[0] == '@'){
       if (((*pa)->prtIzq->info.entero != 0)){
       strcpy(instruccion.operacion, "FILD");
       strcpy(instruccion.reg1, (*pa)->prtIzq->valor);    
@@ -416,14 +419,20 @@ void comparacionAssembler(tArbol *pa, char* comparador){
       }
     } else{
       sprintf(instruccion.reg1,"_%s", (*pa)->prtIzq->valor);
-    }
+    }*/
+    // como proceso un string ?????? quizas lo mejor seria no procesarlo para comparaciones
   }
-    strcpy(instruccion.reg2,"");
+
+  sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->valor);
+  strcpy(instruccion.reg2,"");
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
   
   strcpy(instruccion.operacion, "FCOMP");
-  if ( ((*pa)->prtDer->info.entero != 0)){
+
+  //registro = buscar_registro_en_ts((*pa)->prtDer->valor);
+
+  /*if (!strcmp(tabla_simbolos[registro].tipo,"INT")){
     sprintf(instruccion.reg1, "%d", (*pa)->prtDer->info.entero);
   } else if ( ((*pa)->prtDer->info.flotante != 0)){
     sprintf(instruccion.reg1, "%f", (*pa)->prtDer->info.flotante);
@@ -437,24 +446,25 @@ void comparacionAssembler(tArbol *pa, char* comparador){
     } else{
       sprintf(instruccion.reg1,"_%s", (*pa)->prtDer->valor);
     }
-  }
+  }*/
+  sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
        
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
   strcpy(instruccion.operacion, "FSTSW");
   strcpy(instruccion.reg1, "AX");
   strcpy(instruccion.reg2,"");
-    vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
+  vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
-    strcpy(instruccion.operacion, "SAHF");
+  strcpy(instruccion.operacion, "SAHF");
   strcpy(instruccion.reg1, "");
   strcpy(instruccion.reg2,"");
-    vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
+  vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
   strcpy(instruccion.operacion, "FFREE");
   strcpy(instruccion.reg1, "");
   strcpy(instruccion.reg2,"");
-    vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
+  vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
 
 
@@ -487,6 +497,7 @@ void asignacionAssembler(tArbol *pa){
 
   strcpy(instruccion.operacion, "MOV");
   strcpy(instruccion.reg1, "R1");
+  /*
   if ( ((*pa)->prtDer->info.entero != 0))
     sprintf(instruccion.reg2,"%d", (*pa)->prtDer->info.entero);
   else if ( ((*pa)->prtDer->info.flotante != 0))
@@ -497,21 +508,22 @@ void asignacionAssembler(tArbol *pa){
     } else {
       sprintf(instruccion.reg2,"_%s", (*pa)->prtDer->valor);
     }
-  }
+  }*/
+   sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
 
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
 
   strcpy(instruccion.operacion, "MOV");
-  if ( ((*pa)->prtIzq->info.entero != 0)){
+  /*if ( ((*pa)->prtIzq->info.entero != 0)){
     sprintf(instruccion.reg1,"%d", (*pa)->prtIzq->info.entero);
   } else if ( ((*pa)->prtIzq->info.flotante != 0)) {
     sprintf(instruccion.reg1,"%f", (*pa)->prtIzq->info.flotante);
   } else {
     sprintf(instruccion.reg1,"_%s", (*pa)->prtIzq->valor);
-  }
+  }*/
+  sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->valor);
   strcpy(instruccion.reg2, "R1");
-
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
 }
