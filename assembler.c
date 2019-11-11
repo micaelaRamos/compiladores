@@ -26,6 +26,8 @@ void operacionAssembler(tArbol *pa, char* operacion);
 void asignacionAssembler(tArbol *pa);
 void comparacionAssembler(tArbol *pa, char* comparador);
 void cerrarArchivoAssembler(FILE* arch);
+void abrir_ts_y_guardar_tabla_simbolos();
+int buscar_registro_en_ts(char *nom_reg);
 
 /**PILA struct_assembler**/
 void crear_pila_struct_assembler(t_pila_struct_assembler *pp);
@@ -46,11 +48,11 @@ FILE* abrirArchivoAssembler(){
     return NULL;
   }
 
-  guardar_tabla_simbolos
+  abrir_ts_y_guardar_tabla_simbolos();
   return arch;
 }
 
-void guardar_tabla_simbolos()
+void abrir_ts_y_guardar_tabla_simbolos()
 {
 	FILE *file = fopen("ts.txt", "a");
 	int i = 0;
@@ -67,6 +69,16 @@ void guardar_tabla_simbolos()
 		}		
 		fclose(file);
 	}
+}
+
+int buscar_registro_en_ts(char *nom_reg)
+{
+  int i;
+  for(i=0;i<cant_reg;i++){
+    if (strcmpi(nom_reg, tabla_simbolos[i].nombre) == 0)
+      return i;
+  }
+  return -1;
 }
 
 FILE* abrirArchivoAssembler(){
@@ -89,9 +101,9 @@ void crearAssembler(FILE* arch , tabla_simbolos_reg tabla_simbolo[50]){
   fprintf(arch, ".386\n");
   fprintf(arch, ".STACK 200h \n");
   fprintf(arch, ".DATA \n");
-  for(i=0; i < indice_tabla; i++){
+  while(tabla_simbolo[i].nombre != NULL){
      fprintf(arch, "%-30s\t\t\t%d\n",tabla_simbolo[i].nombre, tabla_simbolo[i].tipo);
-    
+     i++;
   }
   fprintf(arch, ".CODE \n");
   fprintf(arch, "MAIN:\n");
@@ -124,7 +136,6 @@ void crearAssembler(FILE* arch , tabla_simbolos_reg tabla_simbolo[50]){
 }
 
 void procesarArbolParaAssembler(tArbol *pa, FILE* arch){
-
   struct_assembler instruccion;
   char aux[10];
 
@@ -296,17 +307,6 @@ void procesarArbolParaAssembler(tArbol *pa, FILE* arch){
     }
   }
 }
-
-int buscar_registro_en_ts(char *nom_reg)
-{
-	int i;
-	for(i=0;i<cant_reg;i++){
-		if (strcmpi(nom_reg, tabla_simbolos[i].nombre) == 0)
-			return i;
-	}
-	return -1;
-}
-
 
 void operacionAssembler(tArbol *pa, char* operacion){
   
