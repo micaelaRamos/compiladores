@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 typedef struct {
     char operacion[100];
     char reg1[100];
@@ -14,26 +15,38 @@ struct tabla_simbolos_reg {
 	char *longitud;
 };
 
+#define TAM_PILA 50
+#define TOPE_PILA_VACIA -1
+
+typedef struct {
+		int vec[TAM_PILA];
+		int tope;
+}t_pila_struct_assembler;
+
 struct tabla_simbolos_reg tabla_simbolos[50];
 
 struct_assembler vector_auxs_assembler[200];
 int vector_auxs_assembler_cant = 0;
+int repeatFlag = 0;
+int ifFlag = 0;
+int contAssembler = 0;
+char auxAssembler[10];
 
 FILE* abrirArchivoAssembler();
-void procesarArbolParaAssembler(tArbol *pa, FILE* arch);
+void procesarArbolParaAssembler(ptrNodoArbol *pa, FILE* arch);
 void crearAssembler(FILE* archivoAssembler);
-void operacionAssembler(tArbol *pa, char* operacion);
-void asignacionAssembler(tArbol *pa);
-void comparacionAssembler(tArbol *pa, char* comparador);
+void operacionAssembler(ptrNodoArbol *pa, char* operacion);
+void asignacionAssembler(ptrNodoArbol *pa);
+void comparacionAssembler(ptrNodoArbol *pa, char* comparador);
 void cerrarArchivoAssembler(FILE* arch);
 void abrir_ts_y_guardar_tabla_simbolos();
 int buscar_registro_en_ts(char *nom_reg);
 
 /**PILA struct_assembler**/
-void crear_pila_struct_assembler(t_pila_struct_assembler *pp);
-int poner_en_pila_struct_assembler(t_pila_struct_assembler *pp, int pi);
-int sacar_de_pila_struct_assembler(t_pila_struct_assembler *pp);
-int pila_vacia_struct_assembler(const t_pila_struct_assembler *pp);
+void crear_pilar(t_pila_struct_assembler *pp);
+int poner_en_pila(t_pila_struct_assembler *pp, int pi);
+int sacar_de_pila(t_pila_struct_assembler *pp);
+int pila_vacia(const t_pila_struct_assembler *pp);
 
 t_pila_struct_assembler pilaAssembler;
 t_pila_struct_assembler pilaCondicionIFAssembler;
@@ -63,8 +76,7 @@ void abrir_ts_y_guardar_tabla_simbolos()
 	}
 	else 
 	{
-		for (i; i < cant_reg; i++) 
-		{
+		while(tabla_simbolos[i].nombre != NULL){
 			fprintf(file, "%s\t%s\t%s\t%s\n", tabla_simbolos[i].nombre, tabla_simbolos[i].tipo, tabla_simbolos[i].valor, tabla_simbolos[i].longitud);
 		}		
 		fclose(file);
@@ -74,42 +86,32 @@ void abrir_ts_y_guardar_tabla_simbolos()
 int buscar_registro_en_ts(char *nom_reg)
 {
   int i;
-  for(i=0;i<cant_reg;i++){
+  while(tabla_simbolos[i].nombre != NULL){
     if (strcmpi(nom_reg, tabla_simbolos[i].nombre) == 0)
       return i;
   }
   return -1;
 }
 
-FILE* abrirArchivoAssembler(){
-  FILE* arch = fopen("assembler.txt", "w+");
-  if(!arch){
-    printf("No se pudo crear el archivo assembler.txt\n");
-    return NULL;
-  }
-
-  return arch;
-}
-
-void crearAssembler(FILE* arch , tabla_simbolos_reg tabla_simbolo[50]){
+void crearAssembler(FILE* arch){
   int i = 0;
   int j = 0;
   //principio assembler y creacion de variables
-  fprintf(arch, "include macros2.struct_assembler\n");
-  fprintf(arch, "include number.struct_assembler\n");
+  fprintf(arch, "include macros2.ASM\n");
+  fprintf(arch, "include number.ASM\n");
   fprintf(arch, ".MODEL LARGE \n");
   fprintf(arch, ".386\n");
   fprintf(arch, ".STACK 200h \n");
   fprintf(arch, ".DATA \n");
-  while(tabla_simbolo[i].nombre != NULL){
-     fprintf(arch, "%-30s\t\t\t%d\n",tabla_simbolo[i].nombre, tabla_simbolo[i].tipo);
+  while(tabla_simbolos[i].nombre != NULL){
+     fprintf(arch, "%-30s\t\t\t%d\n",tabla_simbolos[i].nombre, tabla_simbolos[i].tipo);
      i++;
   }
   fprintf(arch, ".CODE \n");
   fprintf(arch, "MAIN:\n");
   fprintf(arch, "\n");
   fprintf(arch, "\n");
-  fprintf(arch, "mov AX,@DATA   ;inicializa el segmento de datos\n");
+  fprintf(arch, "mov AX,@DATA\n");
   fprintf(arch, "mov DS,AX \n");
   fprintf(arch, "mov ES,AX \n");
   fprintf(arch, "FNINIT \n");;
@@ -135,20 +137,19 @@ void crearAssembler(FILE* arch , tabla_simbolos_reg tabla_simbolo[50]){
   fclose(arch);
 }
 
-void procesarArbolParaAssembler(tArbol *pa, FILE* arch){
+void procesarArbolParaAssembler(ptrNodoArbol *pa, FILE* arch){
   struct_assembler instruccion;
   char aux[10];
 
   if(!*pa)
     return;
-  
 
-  if((*pa)->prtDer != NULL || (*pa)->prtIzq != NULL){ 
+  if((*pa)->prtDer != NULL || (*pa)->ptrIzq != NULL){ 
     if(!strcmp((*pa)->valor, "while")){
       strcpy(instruccion.operacion, "repeat");
       strcpy(instruccion.reg1, "");
       strcpy(instruccion.reg2, "");
-      poner_en_pila_struct_assembler(&pilaAssembler, vector_auxs_assembler_cant);
+      poner_en_pila(&pilaAssembler, vector_auxs_assembler_cant);
       vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
       vector_auxs_assembler_cant++;
 
@@ -158,15 +159,15 @@ void procesarArbolParaAssembler(tArbol *pa, FILE* arch){
     }
   }
 
-  procesarArbolParaAssembler(&(*pa)->prtIzq, arch);
+  procesarArbolParaAssembler(&(*pa)->ptrIzq, arch);
   
-  if((*pa)->prtDer != NULL || (*pa)->prtIzq != NULL){ 
+  if((*pa)->prtDer != NULL || (*pa)->ptrIzq != NULL){ 
     if(!strcmp((*pa)->valor, "else")){
       strcpy(instruccion.operacion, "JMP");
       strcpy(instruccion.reg1, "");
       strcpy(instruccion.reg2, "");
       
-      poner_en_pila_struct_assembler(&pilaAssembler, vector_auxs_assembler_cant);
+      poner_en_pila(&pilaAssembler, vector_auxs_assembler_cant);
       
       vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
       vector_auxs_assembler_cant++;
@@ -178,13 +179,13 @@ void procesarArbolParaAssembler(tArbol *pa, FILE* arch){
       vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
       vector_auxs_assembler_cant++;
 
-      poner_en_pila_struct_assembler(&pilaElseProcesados, 1);
+      poner_en_pila(&pilaElseProcesados, 1);
     }
   }
 
   procesarArbolParaAssembler(&(*pa)->prtDer, arch);
 
-  if((*pa)->prtDer != NULL || (*pa)->prtIzq != NULL){ 
+  if((*pa)->prtDer != NULL || (*pa)->ptrIzq != NULL){ 
     if(!strcmp((*pa)->valor, "+")){
       operacionAssembler(&(*pa), "FADD");
     } else if(!strcmp((*pa)->valor, "-")){
@@ -220,32 +221,32 @@ void procesarArbolParaAssembler(tArbol *pa, FILE* arch){
       vector_auxs_assembler_cant++;
 
       //Si la pila de else procesados está vacía, significa que es un if sin else
-      if(!pila_vacia_struct_assembler(&pilaElseProcesados)){
+      if(!pila_vacia(&pilaElseProcesados)){
         if(pila_vacia(&pilaCondicionIFAssembler)){
-          jump_else = sacar_de_pila_struct_assembler(&pilaAssembler);
+          jump_else = sacar_de_pila(&pilaAssembler);
           strcpy(vector_auxs_assembler[jump_else].reg1, "endif");
-          pos_condicion = sacar_de_pila_struct_assembler(&pilaAssembler);
+          pos_condicion = sacar_de_pila(&pilaAssembler);
           strcpy(vector_auxs_assembler[pos_condicion].reg1, "else");
         } else {
-          tipo_condicion = sacar_de_pila_struct_assembler(&pilaCondicionIFAssembler);
+          tipo_condicion = sacar_de_pila(&pilaCondicionIFAssembler);
           if(tipo_condicion == AND){
-            pos_condicion = sacar_de_pila_struct_assembler(&pilaAssembler);
+            pos_condicion = sacar_de_pila(&pilaAssembler);
             strcpy(vector_auxs_assembler[pos_condicion].reg1, "else");
-            pos_condicion = sacar_de_pila_struct_assembler(&pilaAssembler);
+            pos_condicion = sacar_de_pila(&pilaAssembler);
             strcpy(vector_auxs_assembler[pos_condicion].reg1, "else");
           }
         }
-        sacar_de_pila_struct_assembler(&pilaElseProcesados);
+        sacar_de_pila(&pilaElseProcesados);
       } else {
-        if(pila_vacia_struct_assembler(&pilaCondicionIFAssembler)){
-          pos_condicion = sacar_de_pila_struct_assembler(&pilaAssembler);
+        if(pila_vacia(&pilaCondicionIFAssembler)){
+          pos_condicion = sacar_de_pila(&pilaAssembler);
           strcpy(vector_auxs_assembler[pos_condicion].reg1, "endif");
         } else {
-          tipo_condicion = sacar_de_pila_struct_assembler(&pilaCondicionIFAssembler);
+          tipo_condicion = sacar_de_pila(&pilaCondicionIFAssembler);
           if(tipo_condicion == AND){
-            pos_condicion = sacar_de_pila_struct_assembler(&pilaAssembler);
+            pos_condicion = sacar_de_pila(&pilaAssembler);
             strcpy(vector_auxs_assembler[pos_condicion].reg1, "endif");
-            pos_condicion = sacar_de_pila_struct_assembler(&pilaAssembler);
+            pos_condicion = sacar_de_pila(&pilaAssembler);
             strcpy(vector_auxs_assembler[pos_condicion].reg1, "endif");
           }
         }
@@ -258,20 +259,20 @@ void procesarArbolParaAssembler(tArbol *pa, FILE* arch){
       int pos_ini_repeat;
       int tipo_condicion;
       
-      if(pila_vacia_struct_assembler(&pilaCondicionREPEATAssembler)){
-        pos_condicion = sacar_de_pila_struct_assembler(&pilaAssembler);
+      if(pila_vacia(&pilaCondicionREPEATAssembler)){
+        pos_condicion = sacar_de_pila(&pilaAssembler);
         strcpy(vector_auxs_assembler[pos_condicion].reg1, "endwhile");
       } else {
-        tipo_condicion = sacar_de_pila_struct_assembler(&pilaCondicionREPEATAssembler);
+        tipo_condicion = sacar_de_pila(&pilaCondicionREPEATAssembler);
         if(tipo_condicion == AND){
-          pos_condicion = sacar_de_pila_struct_assembler(&pilaAssembler);
+          pos_condicion = sacar_de_pila(&pilaAssembler);
           strcpy(vector_auxs_assembler[pos_condicion].reg1, "endwhile");
-          pos_condicion = sacar_de_pila_struct_assembler(&pilaAssembler);
+          pos_condicion = sacar_de_pila(&pilaAssembler);
           strcpy(vector_auxs_assembler[pos_condicion].reg1, "endwhile");
         }
       }
 
-      pos_ini_repeat = sacar_de_pila_struct_assembler(&pilaAssembler);
+      pos_ini_repeat = sacar_de_pila(&pilaAssembler);
       
       strcpy(instruccion.operacion, "JMP");
       strcpy(instruccion.reg1, vector_auxs_assembler[pos_ini_repeat].operacion);
@@ -289,54 +290,47 @@ void procesarArbolParaAssembler(tArbol *pa, FILE* arch){
       
     } else if(!strcmp((*pa)->valor, "AND")){
       if(repeatFlag == 1){
-        poner_en_pila_struct_assembler(&pilaCondicionREPEATAssembler, AND);
+        poner_en_pila(&pilaCondicionREPEATAssembler, AND);
         repeatFlag = 0;
       } else if (ifFlag == 1){
-        poner_en_pila_struct_assembler(&pilaCondicionIFAssembler, AND);
+        poner_en_pila(&pilaCondicionIFAssembler, AND);
         ifFlag = 0;
       }
       
     } else if(!strcmp((*pa)->valor, "OR")){
       if(repeatFlag == 1){
-        poner_en_pila_struct_assembler(&pilaCondicionREPEATAssembler, OR);
+        poner_en_pila(&pilaCondicionREPEATAssembler, OR);
         repeatFlag = 0;
       } else if (ifFlag == 1){
-        poner_en_pila_struct_assembler(&pilaCondicionIFAssembler, OR);
+        poner_en_pila(&pilaCondicionIFAssembler, OR);
         ifFlag = 0;
       }
     }
   }
 }
 
-void operacionAssembler(tArbol *pa, char* operacion){
+void operacionAssembler(ptrNodoArbol *pa, char* operacion){
   
   char aux[10];
   char aux2[10];
   struct_assembler instruccion;
 
   // primero lo hago con el valor de la izquierda
-  int registro = buscar_registro_en_ts((*pa)->prtIzq->valor);
-  if(!strcmp(tabla_simbolos[registro].tipo == "INT")|| !strcmp(tabla_simbolos[registro].tipo == "CTE_INT")){
+  int registro = buscar_registro_en_ts((*pa)->ptrIzq->valor);
+  if(!strcmp(tabla_simbolos[registro].tipo,"INT")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_INT")){
     strcpy(instruccion.operacion,"FILD");
-  } else if (!strcmp(tabla_simbolos[registro].tipo == "REAL")|| !strcmp(tabla_simbolos[registro].tipo == "CTE_REAL")){
+    sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
+  } else if (!strcmp(tabla_simbolos[registro].tipo, "REAL")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_REAL")){
     strcpy(instruccion.operacion,"FLD");
+    sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
   } else{
-    strcpy(instruccion.operacion,"STRING");
+    if((*pa)->ptrIzq->valor[0] == '@'){
+      strcpy(instruccion.reg1, (*pa)->ptrIzq->valor);
+    } else {
+      sprintf(instruccion.reg1,"_%s", (*pa)->ptrIzq->valor);
+    } 
   }
   
-  /* creo que no es necesario ya que manejamos todo como char, podemos poner el valo directamente
-  if(!strcmp(tipo_dato,"INT")){    
-    sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->info.entero);
-  } else if ( ((*pa)->prtIzq->info.flotante != 0)){    
-    sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->info.flotante);
-  } else {
-    if((*pa)->prtIzq->valor[0] == '@'){
-      strcpy(instruccion.reg1, (*pa)->prtIzq->valor);
-    } else {
-      sprintf(instruccion.reg1,"_%s", (*pa)->prtIzq->valor);
-    } 
-  }*/
-  sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->valor);
   
   strcpy(instruccion.reg2,"");
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
@@ -345,26 +339,19 @@ void operacionAssembler(tArbol *pa, char* operacion){
   // segundo lo hago con el valor de la derecha
   registro = buscar_registro_en_ts((*pa)->prtDer->valor);
   if(!strcmp(tabla_simbolos[registro].tipo, "INT")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_INT")){
-    tipo_dato = "INT";
     strcpy(instruccion.operacion,"FILD");
+    sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
   } else if (!strcmp(tabla_simbolos[registro].tipo, "REAL")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_REAL")){
     strcpy(instruccion.operacion,"FLD");
+    sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
   } else{
-    strcpy(instruccion.operacion,"STRING");
-  }
-  
- /* idem arriba
-  if ( ((*pa)->prtDer->info.entero != 0)){
-    sprintf(instruccion.reg1, "%d", (*pa)->prtDer->info.entero);
-  } else if ( ((*pa)->prtDer->info.flotante != 0)) {
-    sprintf(instruccion.reg1, "%f", (*pa)->prtDer->info.flotante);
-  } else {
-    if((*pa)->prtIzq->valor[0] == '@'){
+    if((*pa)->prtDer->valor[0] == '@'){
       strcpy(instruccion.reg1, (*pa)->prtDer->valor);
     } else {
       sprintf(instruccion.reg1,"_%s", (*pa)->prtDer->valor);
     } 
-  }*/
+  }
+  
   sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
 
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
@@ -380,7 +367,6 @@ void operacionAssembler(tArbol *pa, char* operacion){
   strcpy(aux, "@aux");
   sprintf(aux2, "%d", contAssembler);
   strcat(aux, aux2);
-  //insertarEnTabla(aux,indice_tabla,(*pa)->info.tipoDato);
 
   strcpy(instruccion.operacion, "FSTP");
   strcpy(instruccion.reg2,"");
@@ -397,57 +383,47 @@ void operacionAssembler(tArbol *pa, char* operacion){
     
   strcpy(instruccion.operacion, "");  
   (*pa)->prtDer = NULL;
-  (*pa)->prtIzq = NULL;
+  (*pa)->ptrIzq = NULL;
   strcpy((*pa)->valor,auxAssembler);
+
 }
 
-void comparacionAssembler(tArbol *pa, char* comparador){
+void comparacionAssembler(ptrNodoArbol *pa, char* comparador){
   struct_assembler instruccion;
-  int registro = buscar_registro_en_ts((*pa)->prtIzq->valor);
+  int registro = buscar_registro_en_ts((*pa)->ptrIzq->valor);
   if(!strcmp(tabla_simbolos[registro].tipo,"INT")){
     strcpy(instruccion.operacion, "FILD");
-  } else if (!strcmp(tabla_simbolos[registro].tipo,"FLOAT")){
+    sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
+  } else if (!strcmp(tabla_simbolos[registro].tipo,"REAL")){
     strcpy(instruccion.operacion, "FLD");
+    sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
   } else{
-    /*if((*pa)->prtIzq->valor[0] == '@'){
-      if (((*pa)->prtIzq->info.entero != 0)){
-      strcpy(instruccion.operacion, "FILD");
-      strcpy(instruccion.reg1, (*pa)->prtIzq->valor);    
-      }else{
+    if((*pa)->ptrIzq->valor[0] == '@'){
       strcpy(instruccion.operacion, "FLD");
-      strcpy(instruccion.reg1, (*pa)->prtIzq->valor);
-      }
+      strcpy(instruccion.reg1, (*pa)->ptrIzq->valor);
     } else{
-      sprintf(instruccion.reg1,"_%s", (*pa)->prtIzq->valor);
-    }*/
-    // como proceso un string ?????? quizas lo mejor seria no procesarlo para comparaciones
+      sprintf(instruccion.reg1,"_%s", (*pa)->ptrIzq->valor);
+    }
   }
 
-  sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->valor);
+  sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
   strcpy(instruccion.reg2,"");
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
   
   strcpy(instruccion.operacion, "FCOMP");
 
-  //registro = buscar_registro_en_ts((*pa)->prtDer->valor);
+  registro = buscar_registro_en_ts((*pa)->prtDer->valor);
 
-  /*if (!strcmp(tabla_simbolos[registro].tipo,"INT")){
-    sprintf(instruccion.reg1, "%d", (*pa)->prtDer->info.entero);
-  } else if ( ((*pa)->prtDer->info.flotante != 0)){
-    sprintf(instruccion.reg1, "%f", (*pa)->prtDer->info.flotante);
+  if (!strcmp(tabla_simbolos[registro].tipo,"INT") || !strcmp(tabla_simbolos[registro].tipo,"REAL")){
+    sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
   } else{
-    if((*pa)->prtIzq->valor[0] == '@'){
-      if (((*pa)->prtIzq->info.entero != 0)){
-      strcpy(instruccion.reg1, (*pa)->prtDer->valor);    
-      }else{
+    if((*pa)->ptrIzq->valor[0] == '@'){
       strcpy(instruccion.reg1, (*pa)->prtDer->valor);
-      }
     } else{
       sprintf(instruccion.reg1,"_%s", (*pa)->prtDer->valor);
     }
-  }*/
-  sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
+  }
        
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
@@ -467,8 +443,6 @@ void comparacionAssembler(tArbol *pa, char* comparador){
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
 
-
-
   if(!strcmp(comparador, ">")){
     strcpy(instruccion.operacion, "JLE");
   } else if(!strcmp(comparador, "<")){
@@ -485,44 +459,33 @@ void comparacionAssembler(tArbol *pa, char* comparador){
 
   strcpy(instruccion.reg1, "");
   strcpy(instruccion.reg2, "");
-  poner_en_pila_struct_assembler(&pilaAssembler, vector_auxs_assembler_cant);
+  poner_en_pila(&pilaAssembler, vector_auxs_assembler_cant);
   
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
   
 }
 
-void asignacionAssembler(tArbol *pa){
+void asignacionAssembler(ptrNodoArbol *pa){
   struct_assembler instruccion;
 
+  int registro = buscar_registro_en_ts((*pa)->prtDer->valor);
   strcpy(instruccion.operacion, "MOV");
   strcpy(instruccion.reg1, "R1");
-  /*
-  if ( ((*pa)->prtDer->info.entero != 0))
-    sprintf(instruccion.reg2,"%d", (*pa)->prtDer->info.entero);
-  else if ( ((*pa)->prtDer->info.flotante != 0))
-    sprintf(instruccion.reg2,"%f", (*pa)->prtDer->info.flotante);
-  else{
-    if((*pa)->prtDer->valor[0] == '@'){
-      strcpy(instruccion.reg2, (*pa)->prtDer->valor);
-    } else {
-      sprintf(instruccion.reg2,"_%s", (*pa)->prtDer->valor);
-    }
-  }*/
-   sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
+  
+  sprintf(instruccion.reg2,"%s", (*pa)->prtDer->valor);
+	if((*pa)->prtDer->valor[0] != '@'){
+	  sprintf(instruccion.reg2,"_%s", (*pa)->prtDer->valor);
+	}
 
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
 
   strcpy(instruccion.operacion, "MOV");
-  /*if ( ((*pa)->prtIzq->info.entero != 0)){
-    sprintf(instruccion.reg1,"%d", (*pa)->prtIzq->info.entero);
-  } else if ( ((*pa)->prtIzq->info.flotante != 0)) {
-    sprintf(instruccion.reg1,"%f", (*pa)->prtIzq->info.flotante);
-  } else {
-    sprintf(instruccion.reg1,"_%s", (*pa)->prtIzq->valor);
-  }*/
-  sprintf(instruccion.reg1,"%s", (*pa)->prtIzq->valor);
+  sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
+	if((*pa)->prtDer->valor[0] != '@'){
+	  sprintf(instruccion.reg1,"_%s", (*pa)->ptrIzq->valor);
+	}
   strcpy(instruccion.reg2, "R1");
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
@@ -533,13 +496,13 @@ void cerrarArchivoAssembler(FILE* arch){
 }
 
 /* ************** PILA ASSEMBLER ********************/
-void crear_pila_struct_assembler(t_pila_struct_assembler *pp){
+void crear_pila(t_pila_struct_assembler *pp){
   printf("Creando pila... \n");
-  pp->tope = TOPE_PILA_struct_assembler_VACIA;
+  pp->tope = TOPE_PILA_VACIA;
 }
 
-int poner_en_pila_struct_assembler(t_pila_struct_assembler *pp, int pi){
-  if(pp->tope == TAM_PILA_struct_assembler - 1){
+int poner_en_pila(t_pila_struct_assembler *pp, int pi){
+  if(pp->tope == TAM_PILA - 1){
     printf("Pila llena\n");
     return -1;
   }
@@ -548,7 +511,7 @@ int poner_en_pila_struct_assembler(t_pila_struct_assembler *pp, int pi){
   return 1;
 }
 
-int sacar_de_pila_struct_assembler(t_pila_struct_assembler *pp){
+int sacar_de_pila(t_pila_struct_assembler *pp){
   if( pp->tope == -1){
     printf("Pila vacia\n");
     return -1;
@@ -559,7 +522,7 @@ int sacar_de_pila_struct_assembler(t_pila_struct_assembler *pp){
   return result;
 }
 
-int pila_vacia_struct_assembler(const t_pila_struct_assembler *pp){
-  return pp->tope == TOPE_PILA_struct_assembler_VACIA;
+int pila_vacia(const t_pila_struct_assembler *pp){
+  return pp->tope == TOPE_PILA_VACIA;
 }
 
