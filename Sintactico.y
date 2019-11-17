@@ -46,11 +46,17 @@ int ifBody = 0;
 NodoArbol *ifBodyNodos[3];
 int _cantBloquesIf = 0;
 
+char *_variableADefinir[10];
+int _cantVariables = 0;
+NodoArbol *_expresiones[10];
+int _cantExpresiones = 0;
+
 char * intAString(int numero);
 char * floatAString(double numero);
 char* getTipoVariable(char * id);
 char* getTipoDeOperacion(NodoArbol *nodo1, NodoArbol *nodo2);
 int validarAsignacion(char *id, char *tipoExp);
+void realizarAsignacionMultiple();
 
 FILE* archivoAssembler;
 FILE* archReglas;
@@ -135,11 +141,22 @@ asignacion: const_nombre {printf("regla 18");printf("\n"); fprintf(archReglas, "
 
 const_nombre: CONST ID ASIG constante {printf("regla 21");printf("\n"); fprintf(archReglas, "regla 21\n"); validarDeclaracion($2); validarAsignacion($2, _ptrConst->tipoNodo); _ptrAsignacion = crearNodo(":=", crearHoja($2, getTipoVariable($2)), _ptrConst, _ptrConst->tipoNodo);};
 
-asignacion_linea: CORCH_A lista_asig CORCH_C { printf("regla 22 \n"); fprintf(archReglas, "regla 22\n"); _ptrAsignacionLinea = _ptr_lista_asig;};
+asignacion_linea: CORCH_A lista_asig CORCH_C { printf("regla 22 \n"); fprintf(archReglas, "regla 22\n"); realizarAsignacionMultiple(); _ptrAsignacionLinea = _ptr_lista_asig;};
 
-lista_asig: ID COMA lista_asig COMA expresion {printf("regla 23 \n"); fprintf(archReglas, "regla 23\n"); validarDeclaracion($1); validarAsignacion($1, _ptrExpr->tipoNodo); _ptr_lista_asig = crearNodo(";", _ptr_lista_asig, crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo), "");};
+lista_asig: ID COMA lista_asig COMA expresion {printf("regla 23 \n"); fprintf(archReglas, "regla 23\n"); if(_cantVariables == 10)
+                                                                                                        {
+                                                                                                            yyerror("Excede la cantidad maxima de variables para declaracion en linea");
+                                                                                                        }
+                                                                                                        _variableADefinir[_cantVariables] = $1;
+                                                                                                        _cantVariables++;
+                                                                                                        _expresiones[_cantExpresiones] = _ptrExpr;
+                                                                                                        _cantExpresiones++;
+                                                                                                        };
 
-lista_asig: ID CORCH_C ASIG CORCH_A expresion {printf("regla 24 \n"); fprintf(archReglas, "regla 24\n"); validarDeclaracion($1); validarAsignacion($1, _ptrExpr->tipoNodo); _ptr_lista_asig = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
+lista_asig: ID CORCH_C ASIG CORCH_A expresion {printf("regla 24 \n"); fprintf(archReglas, "regla 24\n"); _variableADefinir[_cantVariables] = $1;
+                                                                                                        _cantVariables++;
+                                                                                                        _expresiones[_cantExpresiones] = _ptrExpr;
+                                                                                                        _cantExpresiones++;};
 
 seleccion: IF P_A condicion P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 25");printf("\n"); fprintf(archReglas, "regla 25\n");  _ptrSeleccion = crearNodo("if", _ptrCondicion, crearNodo("cuerpoIf", _ptrCondCumplida, _elseSelec, ""), ""); ifBody = 0; _cantBloquesIf = 0;}
     | IF P_A condicion P_C LL_A cond_cumplida LL_C {printf("regla 26");printf("\n"); fprintf(archReglas, "regla 26\n"); _ptrSeleccion = crearNodo("if", _ptrCondicion, _ptrCondCumplida, ""); ifBody = 0; _cantBloquesIf = 0;}
@@ -223,19 +240,45 @@ int yyerror(char *errMessage)
     exit (1);
 }
 
-char * floatAString(double numero)
+char* floatAString(double numero)
 {
     char buffer[10] = "";
     sprintf(buffer, "%f", numero);
     return buffer;
 };
 
-char * intAString(int numero)
+char* intAString(int numero)
 {
     char buffer[10] = "";
     snprintf(buffer, 10, "%d", numero);
     return buffer;
 };
+
+void realizarAsignacionMultiple() 
+{
+    int i;
+    char *idADefinir;
+    NodoArbol *expr;
+
+    for(i = 0; i < _cantExpresiones; i++)
+    {
+        // Arranco desde el ultimo id porque el primero ingresado es el que el parser detecta en ultimo lugar
+        idADefinir = _variableADefinir[_cantVariables - 1];
+        expr = _expresiones[i];
+
+        validarDeclaracion(idADefinir);
+        validarAsignacion(idADefinir, expr->tipoNodo);
+        if( i == 0)
+        {
+            _ptr_lista_asig = crearNodo(":=", crearHoja(idADefinir, getTipoVariable(idADefinir)), expr, expr->tipoNodo);
+        }
+        else
+        {
+            _ptr_lista_asig = crearNodo(";", _ptr_lista_asig, crearNodo(":=", crearHoja(idADefinir, getTipoVariable(idADefinir)), expr, expr->tipoNodo), "");
+        }
+        _cantVariables --;
+    }
+} 
 
 char* getTipoVariable(char * id)
 {
