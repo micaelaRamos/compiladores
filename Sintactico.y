@@ -11,31 +11,30 @@ char *yytext;
 extern int yylineno;
 
 char *_constante;
-NodoArbol *_ptrAsignacion;
-NodoArbol *_ptrListaAsignacion;
-NodoArbol *_ptrAsignacionLinea;
-NodoArbol *_ptrSentencia;
-NodoArbol *_ptrArbol;
-NodoArbol *_ptrBloque;
-NodoArbol *_ptrHoja;
-NodoArbol *_ptrConst;
-NodoArbol *_ptrCont;
-NodoArbol *_ptrTermino;
-NodoArbol *_ptrFactor;
-NodoArbol *_ptrExpr;
-NodoArbol *_ptrComparador;
-NodoArbol *_ptrComparacion;
-NodoArbol *_ptrCondicion;
-NodoArbol *_ptrSeleccion;
-NodoArbol *_ptrRepeticion;
+NodoArbol *_ptrAsignacion = NULL;
+NodoArbol *_ptr_lista_asig = NULL;
+NodoArbol *_ptrDeclaracion = NULL;
+NodoArbol *_ptrAsignacionLinea = NULL;
+NodoArbol *_ptrSentencia = NULL;
+NodoArbol *_ptrArbol = NULL;
+NodoArbol *_ptrBloque = NULL;
+NodoArbol *_ptrHoja = NULL;
+NodoArbol *_ptrConst = NULL;
+NodoArbol *_ptrCont = NULL;
+NodoArbol *_ptrTermino = NULL;
+NodoArbol *_ptrFactor = NULL;
+NodoArbol *_ptrExpr = NULL;
+NodoArbol *_ptrComparador = NULL;
+NodoArbol *_ptrComparacion = NULL;
+NodoArbol *_ptrCondicion = NULL;
+NodoArbol *_ptrSeleccion = NULL;
+NodoArbol *_ptrRepeticion = NULL;
 NodoArbol *_listaIds[10];
 NodoArbol *_listaFcts[10];
 NodoArbol *_elseSelec;
 NodoArbol *_ptrCondCumplida;
 NodoArbol *_ptrPrint;
 NodoArbol *_ptrRead;
-NodoArbol *_ptr_lista_asig;
-NodoArbol *_ptrDeclaracion;
 char *_comparador;
 
 int _cantIds = 0;
@@ -85,7 +84,7 @@ bloque: bloque sentencia {printf("regla 2");printf("\n"); _ptrBloque = crearNodo
     | sentencia {printf("regla 3");printf("\n"); _ptrBloque = _ptrSentencia;}        
    
 
-sentencia: declaracion {printf("regla 4");printf("\n"); _ptrSentencia = _ptrDeclaracion;}
+sentencia: declaracion {printf("regla 4");printf("\n");}
     | asignacion {printf("regla 5");printf("\n"); _ptrSentencia = _ptrAsignacion;}         
     | seleccion {printf("regla 6");printf("\n"); _ptrSentencia = _ptrSeleccion;}       
     | repeticion {printf("regla 7");printf("\n"); _ptrSentencia = _ptrRepeticion;}      
@@ -94,9 +93,9 @@ sentencia: declaracion {printf("regla 4");printf("\n"); _ptrSentencia = _ptrDecl
 
 declaracion: VAR CORCH_A lista_declaracion CORCH_C ENDVAR {printf("regla 10 \n");}; 
 
-lista_declaracion: tipo_var COMA lista_declaracion COMA ID {printf("regla 11");printf("\n");insertar_tipo_en_ts(_tipoVar[_tipo], $5); _ptrDeclaracion = crearNodo(";", _ptrDeclaracion, crearNodo("is", crearHoja($5, ""), crearHoja(_tipoVar[_tipo], ""), _tipoVar[_tipo]), ""); _tipo++; }; 
+lista_declaracion: tipo_var COMA lista_declaracion COMA ID {printf("regla 11"); printf("\n");insertar_tipo_en_ts(_tipoVar[_tipo], $5); _tipo++;}; 
 
-lista_declaracion: tipo_var CORCH_C DOSPUNTOS CORCH_A ID {printf("regla 12\n"); insertar_tipo_en_ts(_tipoVar[0], $5); _ptrDeclaracion = crearNodo("is", crearHoja(_tipoVar[0], ""), crearHoja($5, ""), _tipoVar[0]);};
+lista_declaracion: tipo_var CORCH_C DOSPUNTOS CORCH_A ID {printf("regla 12\n"); insertar_tipo_en_ts(_tipoVar[0], $5);};
 
 tipo_var: INT {printf("regla 15");printf("\n"); _tipoVar[_contTipos] = "CTE_INT"; _contTipos++;}
 	| DOUBLE {printf("regla 16");printf("\n"); _tipoVar[_contTipos] = "CTE_REAL"; _contTipos++;}
