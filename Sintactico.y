@@ -42,7 +42,9 @@ int _cantFacts = 0;
 char *_tipoVar[10];
 int _contTipos = 0;
 int _tipo = 1;
-
+int ifBody = 0;
+NodoArbol *ifBodyNodos[3];
+int _cantBloquesIf = 0;
 
 char * intAString(int numero);
 char * floatAString(double numero);
@@ -82,8 +84,33 @@ char *strVal;
 %%
 programa: bloque {printf("regla 1 \n"); fprintf(archReglas, "regla 1 \n"); _ptrArbol = _ptrBloque; guardarArbol(_ptrArbol);};       
 
-bloque: bloque sentencia {printf("regla 2\n"); fprintf(archReglas, "regla 2\n"); _ptrBloque = crearNodo("main", _ptrBloque, _ptrSentencia, "");};  
-    | sentencia {printf("regla 3\n"); fprintf(archReglas, "regla 3\n"); _ptrBloque = _ptrSentencia;}        
+bloque: bloque sentencia {printf("regla 2\n"); fprintf(archReglas, "regla 2\n"); if(_ptrBloque == NULL && !ifBody) 
+                                                                                {
+                                                                                    printf("ptrBloque = ptrSentencia;\n");
+                                                                                    _ptrBloque = _ptrSentencia; 
+                                                                                } 
+                                                                                else 
+                                                                                {
+                                                                                    if(!ifBody) 
+                                                                                    {
+                                                                                        printf("ptrBloque = crearNodo de bloque y sentencia;\n");
+                                                                                        _ptrBloque = crearNodo(";", _ptrBloque, _ptrSentencia, "");
+                                                                                    } else 
+                                                                                    {
+                                                                                        printf("Acumulo nodos if\n");
+                                                                                        ifBodyNodos[_cantBloquesIf] = _ptrSentencia;
+                                                                                        _cantBloquesIf ++;
+                                                                                    } 
+                                                                                }};
+    | sentencia {printf("regla 3\n"); fprintf(archReglas, "regla 3\n");  if(ifBody) {
+                                                                            printf("Acumulo nodos if\n");
+                                                                            ifBodyNodos[_cantBloquesIf] = _ptrSentencia;
+                                                                            _cantBloquesIf ++;
+                                                                        } 
+                                                                        else
+                                                                        {
+                                                                            _ptrBloque = _ptrSentencia;
+                                                                        }};        
    
 sentencia: declaracion {printf("regla 4\n"); fprintf(archReglas, "regla 4\n");}
     | asignacion {printf("regla 5");printf("\n"); fprintf(archReglas, "regla 5\n"); _ptrSentencia = _ptrAsignacion;}         
@@ -114,14 +141,14 @@ lista_asig: ID COMA lista_asig COMA expresion {printf("regla 23 \n"); fprintf(ar
 
 lista_asig: ID CORCH_C ASIG CORCH_A expresion {printf("regla 24 \n"); fprintf(archReglas, "regla 24\n"); validarDeclaracion($1); validarAsignacion($1, _ptrExpr->tipoNodo); _ptr_lista_asig = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
 
-seleccion: IF P_A condicion P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 25");printf("\n"); fprintf(archReglas, "regla 25\n");  _ptrSeleccion = crearNodo("else", crearNodo("if", _ptrCondicion, _ptrCondCumplida, ""), _ptrBloque, "");}
-    | IF P_A condicion P_C LL_A cond_cumplida LL_C {printf("regla 26");printf("\n"); fprintf(archReglas, "regla 26\n"); _ptrSeleccion = crearNodo("if", _ptrCondicion, _ptrCondCumplida, "");}
-    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C {printf("regla 27");printf("\n"); fprintf(archReglas, "regla 27\n"); _ptrSeleccion = crearNodo("if", crearNodo("not", _ptrCondicion, NULL, ""), _ptrCondCumplida, "");}
-    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 28");printf("\n");  fprintf(archReglas, "regla 28\n"); _ptrSeleccion = crearNodo("else", crearNodo("if", crearNodo("not", _ptrCondicion, NULL, ""), _ptrCondCumplida, ""), _ptrBloque, "");};
+seleccion: IF P_A condicion P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 25");printf("\n"); fprintf(archReglas, "regla 25\n");  _ptrSeleccion = crearNodo("if", _ptrCondicion, crearNodo("cuerpoIf", _ptrCondCumplida, _elseSelec, ""), ""); ifBody = 0; _cantBloquesIf = 0;}
+    | IF P_A condicion P_C LL_A cond_cumplida LL_C {printf("regla 26");printf("\n"); fprintf(archReglas, "regla 26\n"); _ptrSeleccion = crearNodo("if", _ptrCondicion, _ptrCondCumplida, ""); ifBody = 0; _cantBloquesIf = 0;}
+    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C {printf("regla 27");printf("\n"); fprintf(archReglas, "regla 27\n"); _ptrSeleccion = crearNodo("if", crearNodo("not", _ptrCondicion, NULL, ""), _ptrCondCumplida, ""); ifBody = 0; _cantBloquesIf = 0;}
+    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 28");printf("\n");  fprintf(archReglas, "regla 28\n"); _ptrSeleccion = crearNodo("if", crearNodo("not", _ptrCondicion, NULL, ""), crearNodo("cuerpoIf", _ptrCondCumplida, _elseSelec, ""), ""); ifBody = 0; _cantBloquesIf = 0;};
 
-else_seleccion: ELSE LL_A bloque LL_C { printf("Regla 29\n"); fprintf(archReglas, "regla 29\n"); _elseSelec = _ptrBloque;};
+else_seleccion: ELSE LL_A bloque LL_C { printf("Regla 29\n"); fprintf(archReglas, "regla 29\n"); _elseSelec = ifBodyNodos[1];};
 
-cond_cumplida: bloque { printf("Regla 30 \n"); fprintf(archReglas, "regla 30\n"); _ptrCondCumplida = _ptrBloque;};
+cond_cumplida: bloque { printf("Regla 30 \n"); fprintf(archReglas, "regla 30\n"); _ptrCondCumplida = ifBodyNodos[0];};
 
 condicion: comparacion {printf("regla 31");printf("\n"); fprintf(archReglas, "regla 31\n"); _ptrCondicion = _ptrComparacion;}
     | condicion AND comparacion  {printf("regla 32");printf("\n"); fprintf(archReglas, "regla 32\n"); _ptrCondicion = crearNodo("and", _ptrCondicion, _ptrComparacion, "");}
@@ -129,14 +156,14 @@ condicion: comparacion {printf("regla 31");printf("\n"); fprintf(archReglas, "re
 
 comparacion: ID comparador factor {printf("regla 34");printf("\n"); fprintf(archReglas, "regla 34\n"); _ptrComparacion = crearNodo(_comparador, crearHoja($1, getTipoVariable($1)), _ptrFactor, "");};
 
-comparador: COMP_IGUAL {printf("regla 35");printf("\n"); fprintf(archReglas, "regla 35\n"); _comparador = "==";}
-    | COMP_MAY {printf("regla 36");printf("\n"); fprintf(archReglas, "regla 36\n"); _comparador = ">";}         
-    | COMP_MENOR {printf("regla 37");printf("\n"); fprintf(archReglas, "regla 37\n"); _comparador = "<";}        
-    | MAY_IGUAL {printf("regla 38");printf("\n"); fprintf(archReglas, "regla 38\n"); _comparador = ">=";}        
-    | MEN_IGUAL {printf("regla 39"); printf("\n"); fprintf(archReglas, "regla 39\n"); _comparador = "<=";};
+comparador: COMP_IGUAL {printf("regla 35");printf("\n"); fprintf(archReglas, "regla 35\n"); _comparador = "=="; ifBody = 1;}
+    | COMP_MAY {printf("regla 36");printf("\n"); fprintf(archReglas, "regla 36\n"); _comparador = ">"; ifBody = 1;}         
+    | COMP_MENOR {printf("regla 37");printf("\n"); fprintf(archReglas, "regla 37\n"); _comparador = "<"; ifBody = 1;}        
+    | MAY_IGUAL {printf("regla 38");printf("\n"); fprintf(archReglas, "regla 38\n"); _comparador = ">="; ifBody = 1;}        
+    | MEN_IGUAL {printf("regla 39"); printf("\n"); fprintf(archReglas, "regla 39\n"); _comparador = "<="; ifBody = 1;};
 
-repeticion: WHILE P_A condicion P_C bloque ENDWHILE {printf("regla 40");printf("\n"); fprintf(archReglas, "regla 40\n"); _ptrRepeticion = crearNodo("while", _ptrCondicion, _ptrBloque, "");}
-    | WHILE P_A NOT condicion P_C bloque ENDWHILE {printf("regla 41");printf("\n"); fprintf(archReglas, "regla 41\n"); _ptrRepeticion = crearNodo("while", crearNodo("not", _ptrCondicion, NULL, ""), _ptrBloque, "");};
+repeticion: WHILE P_A condicion P_C bloque ENDWHILE {printf("regla 40");printf("\n"); fprintf(archReglas, "regla 40\n"); _ptrRepeticion = crearNodo("while", _ptrCondicion, ifBodyNodos[0], ""); ifBody = 0;}
+    | WHILE P_A NOT condicion P_C bloque ENDWHILE {printf("regla 41");printf("\n"); fprintf(archReglas, "regla 41\n"); _ptrRepeticion = crearNodo("while", crearNodo("not", _ptrCondicion, NULL, ""), ifBodyNodos[0], ""); ifBody = 0;};
 
 expresion: expresion SUMA termino {printf("regla 42");printf("\n"); fprintf(archReglas, "regla 42\n"); _ptrExpr = crearNodo("+", _ptrExpr, _ptrTermino, getTipoDeOperacion(_ptrTermino, _ptrFactor));}
     | expresion RESTA termino     {printf("regla 43");printf("\n"); fprintf(archReglas, "regla 43\n"); _ptrExpr = crearNodo("-", _ptrExpr, _ptrTermino, getTipoDeOperacion(_ptrTermino, _ptrFactor));}
