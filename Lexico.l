@@ -28,10 +28,11 @@ int validarDeclaracionExistente(char * id);
 int verificarIdDeclarado(char id[255]);
 int reg_tiene_tipo(int registro);
 char* validarAsignacionCorrecta(char * id , char * constante);
+char* obtener_tipo_variable(char *id);
 
 // Escritura en tabla de simbolos
 void insertar_reg_en_ts(char *nombre, char *tipo, char *valor, char *longitud);
-void insertar_tipo_en_ts(char* tiposVariables[20], char *id);
+void insertar_tipo_en_ts(char* tipoVar, char *id);
 int reg_existente(char *nom_reg);
 int insertar_id_en_ts(char *cad);
 int insertar_cteint_en_ts(int entero);
@@ -170,16 +171,16 @@ void insertar_reg_en_ts(char *nombre, char *tipo, char *valor, char *longitud)
 	cant_reg++;
 }
 
-void insertar_tipo_en_ts(char* tiposVariables[20], char *id)
+void insertar_tipo_en_ts(char* tipoVar, char *id)
 {	
+	int registro;
 	char *idABuscar = (char*) malloc(sizeof(int)+1);
 	*idABuscar = '\0';
 	strcat(idABuscar, "_");
 	strcat(idABuscar, id);
-
-	int registro = reg_existente(idABuscar);
+	registro = reg_existente(idABuscar);
 	if(registro != -1){
-		tabla_simbolos[registro].tipo = tiposVariables[regTiposVariables];
+		tabla_simbolos[registro].tipo = tipoVar;
 		regTiposVariables++;
 	}
 }
@@ -187,9 +188,12 @@ void insertar_tipo_en_ts(char* tiposVariables[20], char *id)
 int verificarIdDeclarado(char id[255]){
 	char *idABuscar = (char*) malloc(sizeof(int)+1);
 	*idABuscar = '\0';
+
 	strcat(idABuscar, "_");
 	strcat(idABuscar, id);
+
 	int registro = reg_existente(idABuscar);
+
 	if(registro != -1) {
 		 if(reg_tiene_tipo(registro)){
 		 	return 1;
@@ -213,16 +217,35 @@ char* validarAsignacionCorrecta(char * id , char * constante){
 	strcat(constABuscar, constante);
 
 	int registroConst = reg_existente(constABuscar);
+
 	char* resultado = strstr(tabla_simbolos[registroConst].tipo,tabla_simbolos[registroId].tipo);
 	return resultado;
+}
+
+char * obtener_tipo_variable(char *id)
+{
+	char *idABuscar = (char*) malloc(sizeof(int)+1);
+
+	*idABuscar = '\0';
+	strcat(idABuscar, "_");
+	strcat(idABuscar, id);
+
+	int registro = reg_existente(idABuscar);
+
+	if(registro == -1) {
+		printf("Variable %s no declarada", id);
+		exit(1);
+	}
+	return tabla_simbolos[registro].tipo;
 }
 
 int reg_existente(char *nom_reg)
 {
 	int i;
 	for(i=0;i<cant_reg;i++){
-		if (strcmpi(nom_reg, tabla_simbolos[i].nombre) == 0)
+		if (strcmpi(nom_reg, tabla_simbolos[i].nombre) == 0) {
 			return i;
+		}
 	}
 	return -1;
 }
