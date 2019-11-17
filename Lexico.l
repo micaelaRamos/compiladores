@@ -226,20 +226,16 @@ char * obtener_tipo_variable(char *id)
 {
 	char *idABuscar = (char*) malloc(sizeof(int)+1);
 
-	printf("Llego a funcion del lexico con id: %s \n", id);
 	*idABuscar = '\0';
 	strcat(idABuscar, "_");
 	strcat(idABuscar, id);
 
 	int registro = reg_existente(idABuscar);
-	printf("Encuentra el registro: %d \n", registro);
 
 	if(registro == -1) {
 		printf("Variable %s no declarada", id);
 		exit(1);
 	}
-
-	printf("tipo encontrado: %s\n", tabla_simbolos[registro].tipo);
 	return tabla_simbolos[registro].tipo;
 }
 

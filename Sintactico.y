@@ -35,6 +35,7 @@ NodoArbol *_ptrCondCumplida;
 NodoArbol *_ptrPrint;
 NodoArbol *_ptrRead;
 NodoArbol *_ptr_lista_asig;
+NodoArbol *_ptrDeclaracion;
 char *_comparador;
 
 int _cantIds = 0;
@@ -84,7 +85,7 @@ bloque: bloque sentencia {printf("regla 2");printf("\n"); _ptrBloque = crearNodo
     | sentencia {printf("regla 3");printf("\n"); _ptrBloque = _ptrSentencia;}        
    
 
-sentencia: declaracion {printf("regla 4");printf("\n");}
+sentencia: declaracion {printf("regla 4");printf("\n"); _ptrSentencia = _ptrDeclaracion;}
     | asignacion {printf("regla 5");printf("\n"); _ptrSentencia = _ptrAsignacion;}         
     | seleccion {printf("regla 6");printf("\n"); _ptrSentencia = _ptrSeleccion;}       
     | repeticion {printf("regla 7");printf("\n"); _ptrSentencia = _ptrRepeticion;}      
@@ -93,23 +94,23 @@ sentencia: declaracion {printf("regla 4");printf("\n");}
 
 declaracion: VAR CORCH_A lista_declaracion CORCH_C ENDVAR {printf("regla 10 \n");}; 
 
-lista_declaracion: tipo_var COMA lista_declaracion COMA ID {printf("regla 11 con este id: %s", $5);printf("\n");insertar_tipo_en_ts(_tipoVar[_tipo], $5); _tipo++;}; 
+lista_declaracion: tipo_var COMA lista_declaracion COMA ID {printf("regla 11");printf("\n");insertar_tipo_en_ts(_tipoVar[_tipo], $5); _ptrDeclaracion = crearNodo(";", _ptrDeclaracion, crearNodo("is", crearHoja($5, ""), crearHoja(_tipoVar[_tipo], ""), _tipoVar[_tipo]), ""); _tipo++; }; 
 
-lista_declaracion: tipo_var CORCH_C DOSPUNTOS CORCH_A ID {printf("regla 12 Con este id : %s\n", $5); insertar_tipo_en_ts(_tipoVar[0], $5);};
+lista_declaracion: tipo_var CORCH_C DOSPUNTOS CORCH_A ID {printf("regla 12\n"); insertar_tipo_en_ts(_tipoVar[0], $5); _ptrDeclaracion = crearNodo("is", crearHoja(_tipoVar[0], ""), crearHoja($5, ""), _tipoVar[0]);};
 
 tipo_var: INT {printf("regla 15");printf("\n"); _tipoVar[_contTipos] = "CTE_INT"; _contTipos++;}
 	| DOUBLE {printf("regla 16");printf("\n"); _tipoVar[_contTipos] = "CTE_REAL"; _contTipos++;}
 	| STRING {printf("regla 17");printf("\n"); _tipoVar[_contTipos] = "CTE_STRING"; _contTipos++;}; 
 
 asignacion: const_nombre {printf("regla 18");printf("\n");}
-	| asignacion_linea {printf("regla 19");printf("\n"); _ptrAsignacion = _ptrAsignacionLinea;} 
+	| asignacion_linea {printf("regla 19");printf("\n"); _ptrAsignacion = _ptrAsignacionLinea;}
 	| ID ASIG expresion {printf("regla 20");printf("\n"); validarDeclaracion($1); validarAsignacion($1, _ptrExpr->tipoNodo); _ptrAsignacion = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
 
 const_nombre: CONST ID ASIG constante {printf("regla 21");printf("\n"); validarDeclaracion($2); validarAsignacion($2, _ptrConst->tipoNodo); _ptrAsignacion = crearNodo(":=", crearHoja($2, getTipoVariable($2)), _ptrConst, _ptrConst->tipoNodo);};
 
 asignacion_linea: CORCH_A lista_asig CORCH_C { printf("regla 22 \n"); _ptrAsignacionLinea = _ptr_lista_asig;};
 
-lista_asig: ID COMA lista_asig COMA expresion {printf("regla 23 \n"); validarDeclaracion($1); validarAsignacion($1, _ptrExpr->tipoNodo); _ptr_lista_asig = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
+lista_asig: ID COMA lista_asig COMA expresion {printf("regla 23 \n"); validarDeclaracion($1); validarAsignacion($1, _ptrExpr->tipoNodo); _ptr_lista_asig = crearNodo(";", _ptr_lista_asig, crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo), "");};
 
 lista_asig: ID CORCH_C ASIG CORCH_A expresion {printf("regla 24 \n"); validarDeclaracion($1); validarAsignacion($1, _ptrExpr->tipoNodo); _ptr_lista_asig = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
 
