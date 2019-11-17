@@ -179,8 +179,8 @@ comparador: COMP_IGUAL {printf("regla 35");printf("\n"); fprintf(archReglas, "re
     | MAY_IGUAL {printf("regla 38");printf("\n"); fprintf(archReglas, "regla 38\n"); _comparador = ">="; ifBody = 1;}        
     | MEN_IGUAL {printf("regla 39"); printf("\n"); fprintf(archReglas, "regla 39\n"); _comparador = "<="; ifBody = 1;};
 
-repeticion: WHILE P_A condicion P_C bloque ENDWHILE {printf("regla 40");printf("\n"); fprintf(archReglas, "regla 40\n"); _ptrRepeticion = crearNodo("while", _ptrCondicion, ifBodyNodos[0], ""); ifBody = 0;}
-    | WHILE P_A NOT condicion P_C bloque ENDWHILE {printf("regla 41");printf("\n"); fprintf(archReglas, "regla 41\n"); _ptrRepeticion = crearNodo("while", crearNodo("not", _ptrCondicion, NULL, ""), ifBodyNodos[0], ""); ifBody = 0;};
+repeticion: WHILE P_A condicion P_C bloque ENDWHILE {printf("regla 40");printf("\n"); fprintf(archReglas, "regla 40\n"); _ptrRepeticion = crearNodo("while", _ptrCondicion, ifBodyNodos[0], ""); ifBody = 0; _cantBloquesIf = 0;}
+    | WHILE P_A NOT condicion P_C bloque ENDWHILE {printf("regla 41");printf("\n"); fprintf(archReglas, "regla 41\n"); _ptrRepeticion = crearNodo("while", crearNodo("not", _ptrCondicion, NULL, ""), ifBodyNodos[0], ""); ifBody = 0; _cantBloquesIf = 0;};
 
 expresion: expresion SUMA termino {printf("regla 42");printf("\n"); fprintf(archReglas, "regla 42\n"); _ptrExpr = crearNodo("+", _ptrExpr, _ptrTermino, getTipoDeOperacion(_ptrTermino, _ptrFactor));}
     | expresion RESTA termino     {printf("regla 43");printf("\n"); fprintf(archReglas, "regla 43\n"); _ptrExpr = crearNodo("-", _ptrExpr, _ptrTermino, getTipoDeOperacion(_ptrTermino, _ptrFactor));}
