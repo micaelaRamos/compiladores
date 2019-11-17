@@ -48,6 +48,7 @@ char * intAString(int numero);
 char * floatAString(double numero);
 char* getTipoVariable(char * id);
 char* getTipoDeOperacion(NodoArbol *nodo1, NodoArbol *nodo2);
+int validarAsignacion(char *id, char *tipoExp);
 
 FILE* archivoAssembler;
 
@@ -102,15 +103,15 @@ tipo_var: INT {printf("regla 15");printf("\n"); _tipoVar[_contTipos] = "CTE_INT"
 
 asignacion: const_nombre {printf("regla 18");printf("\n");}
 	| asignacion_linea {printf("regla 19");printf("\n"); _ptrAsignacion = _ptrAsignacionLinea;} 
-	| ID ASIG expresion {printf("regla 20");printf("\n"); _ptrAsignacion = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
+	| ID ASIG expresion {printf("regla 20");printf("\n"); validarAsignacion($1, _ptrExpr->tipoNodo); _ptrAsignacion = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
 
-const_nombre: CONST ID ASIG constante {printf("regla 21");printf("\n"); _ptrAsignacion = crearNodo(":=", crearHoja($2, getTipoVariable($2)), _ptrConst, _ptrConst->tipoNodo);};
+const_nombre: CONST ID ASIG constante {printf("regla 21");printf("\n"); validarAsignacion($2, _ptrConst->tipoNodo); _ptrAsignacion = crearNodo(":=", crearHoja($2, getTipoVariable($2)), _ptrConst, _ptrConst->tipoNodo);};
 
 asignacion_linea: CORCH_A lista_asig CORCH_C { printf("regla 22 \n"); _ptrAsignacionLinea = _ptr_lista_asig;};
 
-lista_asig: ID COMA lista_asig COMA expresion {printf("regla 23 \n"); _ptr_lista_asig = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
+lista_asig: ID COMA lista_asig COMA expresion {printf("regla 23 \n"); validarAsignacion($1, _ptrExpr->tipoNodo); _ptr_lista_asig = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
 
-lista_asig: ID CORCH_C ASIG CORCH_A expresion {printf("regla 24 \n"); _ptr_lista_asig = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
+lista_asig: ID CORCH_C ASIG CORCH_A expresion {printf("regla 24 \n"); validarAsignacion($1, _ptrExpr->tipoNodo); _ptr_lista_asig = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
 
 seleccion: IF P_A condicion P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 27");printf("\n"); _ptrSeleccion = crearNodo("else", crearNodo("if", _ptrCondicion, _ptrCondCumplida, ""), _ptrBloque, "");}
     | IF P_A condicion P_C LL_A cond_cumplida LL_C {printf("regla 28");printf("\n"); _ptrSeleccion = crearNodo("if", _ptrCondicion, _ptrCondCumplida, "");}
@@ -209,4 +210,14 @@ char* getTipoDeOperacion(NodoArbol *nodo1, NodoArbol *nodo2)
         return "CTE_INT";
        
     return "CTE_REAL";
+}
+
+int validarAsignacion(char *id, char *tipoExp) 
+{
+    if(strcmp(getTipoVariable(id), tipoExp) != 0)
+    {
+        yyerror("Error en la asignacion de la variable");
+    }
+
+    return 1;
 }
