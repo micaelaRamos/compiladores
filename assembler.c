@@ -40,7 +40,7 @@ void asignacionAssembler(ptrNodoArbol *pa);
 void comparacionAssembler(ptrNodoArbol *pa, char* comparador);
 void cerrarArchivoAssembler(FILE* arch);
 void abrir_ts_y_guardar_tabla_simbolos();
-int buscar_registro_en_ts(char *nom_reg);
+int obtenerCantRegistrosTs();
 
 /**PILA struct_assembler**/
 void crear_pilar(t_pila_struct_assembler *pp);
@@ -52,6 +52,7 @@ t_pila_struct_assembler pilaAssembler;
 t_pila_struct_assembler pilaCondicionIFAssembler;
 t_pila_struct_assembler pilaCondicionREPEATAssembler;
 t_pila_struct_assembler pilaElseProcesados;
+int cant_registros_ts = 0;
 
 
 FILE* abrirArchivoAssembler(){
@@ -60,37 +61,17 @@ FILE* abrirArchivoAssembler(){
     printf("No se pudo crear el archivo assembler.txt\n");
     return NULL;
   }
-
-  abrir_ts_y_guardar_tabla_simbolos();
+  cant_registros_ts = obtenerCantRegistrosTs();
   return arch;
 }
 
-void abrir_ts_y_guardar_tabla_simbolos()
-{
-	FILE *file = fopen("ts.txt", "a");
-	int i = 0;
 
-	if(file == NULL)
-	{
-    	printf("ERROR: No se pudo abrir el txt de la tabla de simbolos\n");
+int obtenerCantRegistrosTs(){
+  int i = 0;
+	while(tabla_simbolos[i].nombre != NULL){
+		i++;
 	}
-	else 
-	{
-		while(tabla_simbolos[i].nombre != NULL){
-			fprintf(file, "%s\t%s\t%s\t%s\n", tabla_simbolos[i].nombre, tabla_simbolos[i].tipo, tabla_simbolos[i].valor, tabla_simbolos[i].longitud);
-		}		
-		fclose(file);
-	}
-}
-
-int buscar_registro_en_ts(char *nom_reg)
-{
-  int i;
-  while(tabla_simbolos[i].nombre != NULL){
-    if (strcmpi(nom_reg, tabla_simbolos[i].nombre) == 0)
-      return i;
-  }
-  return -1;
+  return i;
 }
 
 void crearAssembler(FILE* arch){
@@ -103,9 +84,42 @@ void crearAssembler(FILE* arch){
   fprintf(arch, ".386\n");
   fprintf(arch, ".STACK 200h \n");
   fprintf(arch, ".DATA \n");
+
   while(tabla_simbolos[i].nombre != NULL){
-     fprintf(arch, "%-30s\t\t\t%d\n",tabla_simbolos[i].nombre, tabla_simbolos[i].tipo);
-     i++;
+	char *tipo = (char*) malloc(31 * sizeof(char *));
+	*tipo = '\0';
+	char *valor = (char*) malloc(31 * sizeof(char *));
+	*valor = '\0';
+    if(!strcmp(tabla_simbolos[i].tipo , "INT") || !strcmp(tabla_simbolos[i].tipo , "CTE_INT")){
+    	tipo = "dw";
+    	if(!strcmp(tabla_simbolos[i].valor , "")){
+    	  valor = "?";
+    	} else {
+    	  valor = tabla_simbolos[i].valor;
+    	}
+    }
+    if(!strcmp(tabla_simbolos[i].tipo , "REAL") || !strcmp(tabla_simbolos[i].tipo , "CTE_REAL")){
+    	tipo = "dd";
+    	if(!strcmp(tabla_simbolos[i].valor , "")){
+    	  valor = "?";
+    	} else {
+    	  valor = tabla_simbolos[i].valor;
+    	}
+    }
+    if(!strcmp(tabla_simbolos[i].tipo , "STRING") || !strcmp(tabla_simbolos[i].tipo , "CTE_STRING")){
+     	tipo = "db";
+     	if(!strcmp(tabla_simbolos[i].valor , "")){
+    	  valor = "?";
+    	} else {
+    	  char str[80];
+    	  strcpy(str, "'");
+		  strcat(str,tabla_simbolos[i].valor);
+		  strcat(str, "'");
+		  valor = str;
+    	}
+    }
+    fprintf(arch, "%-30s\t\t%s\t%s\n",tabla_simbolos[i].nombre, tipo , valor);
+    i++;
   }
   fprintf(arch, ".CODE \n");
   fprintf(arch, "MAIN:\n");
@@ -140,11 +154,10 @@ void crearAssembler(FILE* arch){
 void procesarArbolParaAssembler(ptrNodoArbol *pa, FILE* arch){
   struct_assembler instruccion;
   char aux[10];
-
   if(!*pa)
     return;
 
-  if((*pa)->prtDer != NULL || (*pa)->ptrIzq != NULL){ 
+  if((*pa)->prtDer != NULL || (*pa)->ptrIzq != NULL){
     if(!strcmp((*pa)->valor, "while")){
       strcpy(instruccion.operacion, "repeat");
       strcpy(instruccion.reg1, "");
@@ -159,6 +172,7 @@ void procesarArbolParaAssembler(ptrNodoArbol *pa, FILE* arch){
     }
   }
 
+  // para recorrer por izquierda
   procesarArbolParaAssembler(&(*pa)->ptrIzq, arch);
   
   if((*pa)->prtDer != NULL || (*pa)->ptrIzq != NULL){ 
@@ -183,6 +197,7 @@ void procesarArbolParaAssembler(ptrNodoArbol *pa, FILE* arch){
     }
   }
 
+  //para recorrer por derecha
   procesarArbolParaAssembler(&(*pa)->prtDer, arch);
 
   if((*pa)->prtDer != NULL || (*pa)->ptrIzq != NULL){ 
@@ -310,17 +325,18 @@ void procesarArbolParaAssembler(ptrNodoArbol *pa, FILE* arch){
 }
 
 void operacionAssembler(ptrNodoArbol *pa, char* operacion){
-  
-  char aux[10];
-  char aux2[10];
+  char *aux = (char*) malloc(31 * sizeof(char *));
+  char *aux2 = (char*) malloc(31 * sizeof(char *));
+  *aux = '\0';
+  *aux2 = '\0';
+
   struct_assembler instruccion;
 
   // primero lo hago con el valor de la izquierda
-  int registro = buscar_registro_en_ts((*pa)->ptrIzq->valor);
-  if(!strcmp(tabla_simbolos[registro].tipo,"INT")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_INT")){
+  if(!strcmp((*pa)->ptrIzq->tipoNodo,"INT")|| !strcmp((*pa)->ptrIzq->tipoNodo, "CTE_INT")){
     strcpy(instruccion.operacion,"FILD");
     sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
-  } else if (!strcmp(tabla_simbolos[registro].tipo, "REAL")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_REAL")){
+  } else if (!strcmp((*pa)->ptrIzq->tipoNodo, "REAL")|| !strcmp((*pa)->ptrIzq->tipoNodo, "CTE_REAL")){
     strcpy(instruccion.operacion,"FLD");
     sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
   } else{
@@ -337,11 +353,11 @@ void operacionAssembler(ptrNodoArbol *pa, char* operacion){
   vector_auxs_assembler_cant++;
 
   // segundo lo hago con el valor de la derecha
-  registro = buscar_registro_en_ts((*pa)->prtDer->valor);
-  if(!strcmp(tabla_simbolos[registro].tipo, "INT")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_INT")){
+
+  if(!strcmp((*pa)->prtDer->tipoNodo, "INT")|| !strcmp((*pa)->prtDer->tipoNodo, "CTE_INT")){
     strcpy(instruccion.operacion,"FILD");
     sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
-  } else if (!strcmp(tabla_simbolos[registro].tipo, "REAL")|| !strcmp(tabla_simbolos[registro].tipo, "CTE_REAL")){
+  } else if (!strcmp((*pa)->prtDer->tipoNodo, "REAL")|| !strcmp((*pa)->prtDer->tipoNodo, "CTE_REAL")){
     strcpy(instruccion.operacion,"FLD");
     sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
   } else{
@@ -364,9 +380,14 @@ void operacionAssembler(ptrNodoArbol *pa, char* operacion){
   vector_auxs_assembler_cant++;
 
   contAssembler++;
+
   strcpy(aux, "@aux");
   sprintf(aux2, "%d", contAssembler);
   strcat(aux, aux2);
+  tabla_simbolos[cant_registros_ts].nombre = aux;
+  tabla_simbolos[cant_registros_ts].tipo = (*pa)->prtDer->tipoNodo;
+  tabla_simbolos[cant_registros_ts].valor = "";
+  cant_registros_ts++;
 
   strcpy(instruccion.operacion, "FSTP");
   strcpy(instruccion.reg2,"");
@@ -390,11 +411,11 @@ void operacionAssembler(ptrNodoArbol *pa, char* operacion){
 
 void comparacionAssembler(ptrNodoArbol *pa, char* comparador){
   struct_assembler instruccion;
-  int registro = buscar_registro_en_ts((*pa)->ptrIzq->valor);
-  if(!strcmp(tabla_simbolos[registro].tipo,"INT")){
+
+  if(!strcmp((*pa)->ptrIzq->tipoNodo,"INT")){
     strcpy(instruccion.operacion, "FILD");
     sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
-  } else if (!strcmp(tabla_simbolos[registro].tipo,"REAL")){
+  } else if (!strcmp((*pa)->ptrIzq->tipoNodo,"REAL")){
     strcpy(instruccion.operacion, "FLD");
     sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
   } else{
@@ -413,9 +434,7 @@ void comparacionAssembler(ptrNodoArbol *pa, char* comparador){
   
   strcpy(instruccion.operacion, "FCOMP");
 
-  registro = buscar_registro_en_ts((*pa)->prtDer->valor);
-
-  if (!strcmp(tabla_simbolos[registro].tipo,"INT") || !strcmp(tabla_simbolos[registro].tipo,"REAL")){
+  if (!strcmp((*pa)->prtDer->tipoNodo,"INT") || !strcmp((*pa)->prtDer->tipoNodo,"REAL")){
     sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
   } else{
     if((*pa)->ptrIzq->valor[0] == '@'){
@@ -468,8 +487,6 @@ void comparacionAssembler(ptrNodoArbol *pa, char* comparador){
 
 void asignacionAssembler(ptrNodoArbol *pa){
   struct_assembler instruccion;
-
-  int registro = buscar_registro_en_ts((*pa)->prtDer->valor);
   strcpy(instruccion.operacion, "MOV");
   strcpy(instruccion.reg1, "R1");
   
@@ -486,6 +503,7 @@ void asignacionAssembler(ptrNodoArbol *pa){
 	if((*pa)->prtDer->valor[0] != '@'){
 	  sprintf(instruccion.reg1,"_%s", (*pa)->ptrIzq->valor);
 	}
+  
   strcpy(instruccion.reg2, "R1");
   vector_auxs_assembler[vector_auxs_assembler_cant] = instruccion;
   vector_auxs_assembler_cant++;
