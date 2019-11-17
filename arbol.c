@@ -12,9 +12,7 @@ void inicializarArbol();
 
 
 /* inserta un nodo dentro del Arbol */
-ptrNodoArbol crearNodo( char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol ptrArbolDer, char tipoNodo[25] ) {
-
-
+ptrNodoArbol crearNodo( char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol ptrArbolDer, char *tipoNodo ) {
     /*Crea el nodo que va a devolver*/
     ptrNodoArbol ptrNodo;
     ptrNodo = malloc(sizeof(NodoArbol));
