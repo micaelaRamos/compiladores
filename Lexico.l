@@ -218,7 +218,7 @@ void asignarTipoACteConNombre(char * id, char * constante) {
 
 	int registroConst = reg_existente(constABuscar);
 
-	strcpy(tabla_simbolos[registroId].tipo, tabla_simbolos[registroConst].tipo);
+	tabla_simbolos[registroId].tipo = tabla_simbolos[registroConst].tipo;
 }
 
 char* validarAsignacionCorrecta(char * id , char * constante){

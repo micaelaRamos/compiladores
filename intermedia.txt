@@ -1,1 +1,1 @@
-var3 := 5 main var3 == 2 if var3 := 1 else var3 := 5 
+var1 := 1 ; var2 := hola ; var3 := 73 ; cteConNombre := cte ; var3 == 2 if var3 := 1 + 5 * var1 cuerpoIf var3 := 5 
