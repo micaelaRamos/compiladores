@@ -56,7 +56,7 @@ int cant_registros_ts = 0;
 
 
 FILE* abrirArchivoAssembler(){
-  FILE* arch = fopen("assembler.txt", "w+");
+  FILE* arch = fopen("Final.asm", "w+");
   if(!arch){
     printf("No se pudo crear el archivo assembler.txt\n");
     return NULL;
