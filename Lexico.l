@@ -202,6 +202,25 @@ int verificarIdDeclarado(char id[255]){
 	return 0;
 }
 
+void asignarTipoACteConNombre(char * id, char * constante) {
+	char *idABuscar = (char*) malloc(sizeof(int)+1);
+
+	*idABuscar = '\0';
+	strcat(idABuscar, "_");
+	strcat(idABuscar, id);
+
+	int registroId = reg_existente(idABuscar);
+
+	char *constABuscar = (char*) malloc(sizeof(int)+1);
+	*constABuscar = '\0';
+	strcat(constABuscar, "_");
+	strcat(constABuscar, constante);
+
+	int registroConst = reg_existente(constABuscar);
+
+	strcpy(tabla_simbolos[registroId].tipo, tabla_simbolos[registroConst].tipo);
+}
+
 char* validarAsignacionCorrecta(char * id , char * constante){
 	char *idABuscar = (char*) malloc(sizeof(int)+1);
 

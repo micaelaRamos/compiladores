@@ -140,7 +140,7 @@ asignacion: const_nombre {printf("regla 18");printf("\n"); fprintf(archReglas, "
 	| asignacion_linea {printf("regla 19");printf("\n"); fprintf(archReglas, "regla 19\n"); _ptrAsignacion = _ptrAsignacionLinea;}
 	| ID ASIG expresion {printf("regla 20");printf("\n"); fprintf(archReglas, "regla 20\n"); validarDeclaracion($1); validarAsignacion($1, _ptrExpr->tipoNodo); _ptrAsignacion = crearNodo(":=", crearHoja($1, getTipoVariable($1)), _ptrExpr, _ptrExpr->tipoNodo);};
 
-const_nombre: CONST ID ASIG constante {printf("regla 21");printf("\n"); fprintf(archReglas, "regla 21\n"); validarDeclaracion($2); validarAsignacion($2, _ptrConst->tipoNodo); _ptrAsignacion = crearNodo(":=", crearHoja($2, getTipoVariable($2)), _ptrConst, _ptrConst->tipoNodo);};
+const_nombre: CONST ID ASIG constante {printf("regla 21");printf("\n"); fprintf(archReglas, "regla 21\n"); asignarTipoACteConNombre($2, _ptrConst->valor); _ptrAsignacion = crearNodo(":=", crearHoja($2, getTipoVariable($2)), _ptrConst, _ptrConst->tipoNodo);};
 
 asignacion_linea: CORCH_A lista_asig CORCH_C { printf("regla 22 \n"); fprintf(archReglas, "regla 22\n"); realizarAsignacionMultiple(); _ptrAsignacionLinea = _ptr_lista_asig;};
 
