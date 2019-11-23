@@ -65,7 +65,6 @@ FILE* abrirArchivoAssembler(){
   return arch;
 }
 
-
 int obtenerCantRegistrosTs(){
   int i = 0;
 	while(tabla_simbolos[i].nombre != NULL){
@@ -78,8 +77,8 @@ void crearAssembler(FILE* arch){
   int i = 0;
   int j = 0;
   //principio assembler y creacion de variables
-  fprintf(arch, "include macros2.ASM\n");
-  fprintf(arch, "include number.ASM\n");
+  fprintf(arch, "include macros2.asm\n");
+  fprintf(arch, "include number.asm\n");
   fprintf(arch, ".MODEL LARGE \n");
   fprintf(arch, ".386\n");
   fprintf(arch, ".STACK 200h \n");
