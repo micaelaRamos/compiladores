@@ -301,7 +301,7 @@ int insertar_cteint_en_ts(int entero)
 	strcat(nombre, valor);
 	
 	if (reg_existente(nombre) == -1)
-		insertar_reg_en_ts(nombre, "CTE_INT", valor, "-");
+		insertar_reg_en_ts(nombre, "INT", valor, "-");
 
 	return 1;
 }
@@ -317,7 +317,7 @@ int insertar_ctereal_en_ts(float real)
 	strcat(nombre, valor);
 	
 	if (reg_existente(nombre) == -1)
-		insertar_reg_en_ts(nombre, "CTE_REAL", valor, "-");
+		insertar_reg_en_ts(nombre, "REAL", valor, "-");
 
 	return 1;
 }
@@ -333,7 +333,7 @@ int insertar_ctestring_en_ts(char *cad)
 	itoa(strlen(cad), longitud, 10);
 	
 	if (reg_existente(nombre) == -1)
-		insertar_reg_en_ts(nombre, "CTE_STRING", cad, longitud);
+		insertar_reg_en_ts(nombre, "STRING", cad, longitud);
 
 	return 1;
 }

@@ -132,9 +132,9 @@ lista_declaracion: tipo_var COMA lista_declaracion COMA ID {printf("regla 11"); 
 
 lista_declaracion: tipo_var CORCH_C DOSPUNTOS CORCH_A ID {printf("regla 12\n"); fprintf(archReglas, "regla 12\n"); insertar_tipo_en_ts(_tipoVar[0], $5);};
 
-tipo_var: INT {printf("regla 15");printf("\n"); fprintf(archReglas, "regla 15\n"); _tipoVar[_contTipos] = "CTE_INT"; _contTipos++;}
-	| DOUBLE {printf("regla 16");printf("\n"); fprintf(archReglas, "regla 16\n"); _tipoVar[_contTipos] = "CTE_REAL"; _contTipos++;}
-	| STRING {printf("regla 17");printf("\n"); fprintf(archReglas, "regla 17\n"); _tipoVar[_contTipos] = "CTE_STRING"; _contTipos++;}; 
+tipo_var: INT {printf("regla 15");printf("\n"); fprintf(archReglas, "regla 15\n"); _tipoVar[_contTipos] = "INT"; _contTipos++;}
+	| DOUBLE {printf("regla 16");printf("\n"); fprintf(archReglas, "regla 16\n"); _tipoVar[_contTipos] = "REAL"; _contTipos++;}
+	| STRING {printf("regla 17");printf("\n"); fprintf(archReglas, "regla 17\n"); _tipoVar[_contTipos] = "STRING"; _contTipos++;}; 
 
 asignacion: const_nombre {printf("regla 18");printf("\n"); fprintf(archReglas, "regla 18\n");}
 	| asignacion_linea {printf("regla 19");printf("\n"); fprintf(archReglas, "regla 19\n"); _ptrAsignacion = _ptrAsignacionLinea;}
@@ -199,9 +199,9 @@ print: PRINT P_A factor P_C {printf("regla 51");printf("\n"); fprintf(archReglas
 
 read: READ ID            {printf("regla 52");printf("\n"); fprintf(archReglas, "regla 52\n"); _ptrRead = crearNodo("read", crearHoja($2, getTipoVariable($2)), NULL, "");};
 
-constante: CTE_INT       {printf("regla 53");printf("\n"); fprintf(archReglas, "regla 53\n"); _ptrConst = crearHoja(intAString($1), "CTE_INT");}
-    | CTE_REAL           {printf("regla 54");printf("\n"); fprintf(archReglas, "regla 54\n"); _ptrConst = crearHoja(floatAString($1), "CTE_REAL");}    
-    | CTE_STRING         {printf("regla 55");printf("\n"); fprintf(archReglas, "regla 55\n"); _ptrConst = crearHoja($1, "CTE_STRING");};        
+constante: CTE_INT       {printf("regla 53");printf("\n"); fprintf(archReglas, "regla 53\n"); _ptrConst = crearHoja(intAString($1), "INT");}
+    | CTE_REAL           {printf("regla 54");printf("\n"); fprintf(archReglas, "regla 54\n"); _ptrConst = crearHoja(floatAString($1), "REAL");}    
+    | CTE_STRING         {printf("regla 55");printf("\n"); fprintf(archReglas, "regla 55\n"); _ptrConst = crearHoja($1, "STRING");};        
 
 %%
 
@@ -289,10 +289,10 @@ char* getTipoVariable(char * id)
 
 char* getTipoDeOperacion(NodoArbol *nodo1, NodoArbol *nodo2)
 {
-    if(!strcmp(nodo1->tipoNodo, "CTE_INT") && !strcmp(nodo2->tipoNodo, "CTE_INT"))
-        return "CTE_INT";
+    if(!strcmp(nodo1->tipoNodo, "INT") && !strcmp(nodo2->tipoNodo, "INT"))
+        return "INT";
        
-    return "CTE_REAL";
+    return "REAL";
 }
 
 int validarAsignacion(char *id, char *tipoExp) 
