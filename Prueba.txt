@@ -1,5 +1,5 @@
 var
-[int, string, int] : [var1, var2, var3]
+[int, string, int] : [var1@, var2, var3]
 endvar
 [var1, var2, var3] := [1, "hola", 73]
 
@@ -10,3 +10,7 @@ var3 := 1 + 5 * var1
 } else {
 var3 := 5
 }
+
+repeat
+var2 := "chau"
+until(var1 == 1)

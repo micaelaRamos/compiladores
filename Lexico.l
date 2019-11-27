@@ -49,11 +49,10 @@ void guardar_tabla_simbolos();
 DIGITO			[0-9]
 LETRA			[a-zA-Z]
 ID				{LETRA}({LETRA}|{DIGITO}|_)*
-REAL      {DIGITO}+"."{DIGITO}+
-CTEINT       {DIGITO}+
-CTESTRING	\"[a-zA-Z0-9 ]+\"
-VALID_STRING    ({CARACTER}+|{DELIM})*
-COMENTARIO_S    --\/{VALID_STRING}\/--
+REAL      		{DIGITO}+"."{DIGITO}+
+CTEINT       	{DIGITO}+
+CTESTRING		\"[a-zA-Z0-9 ]+\"
+COMENTARIO_S    "--/{LETRA}|{DIGITO}|@|<|>|!|?/--"
 
 %%
 ":="		{ return ASIG;}
@@ -80,8 +79,8 @@ COMENTARIO_S    --\/{VALID_STRING}\/--
 ";"			{ return PUNTO_COMA;}
 "||"		{ return OR;}
 "&&"		{ return AND;}
-"while"		{ return WHILE;}
-"endwhile"	{	return ENDWHILE;}
+"repeat"	{ return REPEAT;}
+"until"		{ return UNTIL;}
 "print"		{ return PRINT;}
 "read"		{ return READ;}
 "var"		{ return VAR;}
@@ -97,11 +96,9 @@ COMENTARIO_S    --\/{VALID_STRING}\/--
 {CTEINT}		{ yylval.intVal = atoi(yytext); validar_cte_int(yylval.intVal); insertar_cteint_en_ts(yylval.intVal); return CTE_INT;}
 {REAL}			{ yylval.realVal = atof(yytext); validar_cte_real(yylval.realVal); insertar_ctereal_en_ts(yylval.realVal); return CTE_REAL;}
 
-
 " "
 "\n"
 "\t"
-
 %%
 
 int validar_cte_int(int num)
