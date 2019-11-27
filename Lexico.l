@@ -80,7 +80,7 @@ COMENTARIO_S    "--/{LETRA}|{DIGITO}|@|<|>|!|?/--"
 "||"		{ return OR;}
 "&&"		{ return AND;}
 "repeat"	{ return REPEAT;}
-"until"		{ return UNTIL;}
+"endrepeat"	{ return ENDREPEAT;}
 "print"		{ return PRINT;}
 "read"		{ return READ;}
 "var"		{ return VAR;}
