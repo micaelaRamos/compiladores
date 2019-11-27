@@ -89,7 +89,7 @@ void crearAssembler(FILE* arch){
 	*tipo = '\0';
 	char *valor = (char*) malloc(31 * sizeof(char *));
 	*valor = '\0';
-    if(!strcmp(tabla_simbolos[i].tipo , "INT") || !strcmp(tabla_simbolos[i].tipo , "CTE_INT")){
+    if(!strcmp(tabla_simbolos[i].tipo , "INT")){
     	tipo = "dw";
     	if(!strcmp(tabla_simbolos[i].valor , "")){
     	  valor = "?";
@@ -97,7 +97,7 @@ void crearAssembler(FILE* arch){
     	  valor = tabla_simbolos[i].valor;
     	}
     }
-    if(!strcmp(tabla_simbolos[i].tipo , "REAL") || !strcmp(tabla_simbolos[i].tipo , "CTE_REAL")){
+    if(!strcmp(tabla_simbolos[i].tipo , "REAL")){
     	tipo = "dd";
     	if(!strcmp(tabla_simbolos[i].valor , "")){
     	  valor = "?";
@@ -105,7 +105,7 @@ void crearAssembler(FILE* arch){
     	  valor = tabla_simbolos[i].valor;
     	}
     }
-    if(!strcmp(tabla_simbolos[i].tipo , "STRING") || !strcmp(tabla_simbolos[i].tipo , "CTE_STRING")){
+    if(!strcmp(tabla_simbolos[i].tipo , "STRING")){
      	tipo = "db";
      	if(!strcmp(tabla_simbolos[i].valor , "")){
     	  valor = "?";
@@ -157,7 +157,7 @@ void procesarArbolParaAssembler(ptrNodoArbol *pa, FILE* arch){
     return;
 
   if((*pa)->prtDer != NULL || (*pa)->ptrIzq != NULL){
-    if(!strcmp((*pa)->valor, "while")){
+    if(!strcmp((*pa)->valor, "repeat")){
       strcpy(instruccion.operacion, "repeat");
       strcpy(instruccion.reg1, "");
       strcpy(instruccion.reg2, "");
@@ -275,14 +275,14 @@ void procesarArbolParaAssembler(ptrNodoArbol *pa, FILE* arch){
       
       if(pila_vacia(&pilaCondicionREPEATAssembler)){
         pos_condicion = sacar_de_pila(&pilaAssembler);
-        strcpy(vector_auxs_assembler[pos_condicion].reg1, "endwhile");
+        strcpy(vector_auxs_assembler[pos_condicion].reg1, "endrepeat");
       } else {
         tipo_condicion = sacar_de_pila(&pilaCondicionREPEATAssembler);
         if(tipo_condicion == AND){
           pos_condicion = sacar_de_pila(&pilaAssembler);
-          strcpy(vector_auxs_assembler[pos_condicion].reg1, "endwhile");
+          strcpy(vector_auxs_assembler[pos_condicion].reg1, "endrepeat");
           pos_condicion = sacar_de_pila(&pilaAssembler);
-          strcpy(vector_auxs_assembler[pos_condicion].reg1, "endwhile");
+          strcpy(vector_auxs_assembler[pos_condicion].reg1, "endrepeat");
         }
       }
 
@@ -332,10 +332,10 @@ void operacionAssembler(ptrNodoArbol *pa, char* operacion){
   struct_assembler instruccion;
 
   // primero lo hago con el valor de la izquierda
-  if(!strcmp((*pa)->ptrIzq->tipoNodo,"INT")|| !strcmp((*pa)->ptrIzq->tipoNodo, "CTE_INT")){
+  if(!strcmp((*pa)->ptrIzq->tipoNodo,"INT")){
     strcpy(instruccion.operacion,"FILD");
     sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
-  } else if (!strcmp((*pa)->ptrIzq->tipoNodo, "REAL")|| !strcmp((*pa)->ptrIzq->tipoNodo, "CTE_REAL")){
+  } else if (!strcmp((*pa)->ptrIzq->tipoNodo, "REAL")){
     strcpy(instruccion.operacion,"FLD");
     sprintf(instruccion.reg1,"%s", (*pa)->ptrIzq->valor);
   } else{
@@ -353,10 +353,10 @@ void operacionAssembler(ptrNodoArbol *pa, char* operacion){
 
   // segundo lo hago con el valor de la derecha
 
-  if(!strcmp((*pa)->prtDer->tipoNodo, "INT")|| !strcmp((*pa)->prtDer->tipoNodo, "CTE_INT")){
+  if(!strcmp((*pa)->prtDer->tipoNodo, "INT")){
     strcpy(instruccion.operacion,"FILD");
     sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
-  } else if (!strcmp((*pa)->prtDer->tipoNodo, "REAL")|| !strcmp((*pa)->prtDer->tipoNodo, "CTE_REAL")){
+  } else if (!strcmp((*pa)->prtDer->tipoNodo, "REAL")){
     strcpy(instruccion.operacion,"FLD");
     sprintf(instruccion.reg1,"%s", (*pa)->prtDer->valor);
   } else{

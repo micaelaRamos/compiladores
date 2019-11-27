@@ -13,7 +13,9 @@ var3 := cteEntera
 }
 
 if(var2 == "hola" && var1 == 2) {
+if(var3 < 52) {
 var2 := "chau"
+}
 }
 
 repeat(var1 == 1)

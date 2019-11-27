@@ -7,10 +7,13 @@
 
 int yystopparser=0;
 
-typedef struct nodoPila {
-    NodoArbol *bloque;
-    struct nodoPila *sig;
-} NodoPila;
+#define TAM_PILA 50
+#define TOPE_PILA_VACIA -1
+
+typedef struct {
+    NodoArbol *vecPila[TAM_PILA];
+    int tope;
+} Pila;
 
 FILE *yyin;
 char *yytext;
@@ -42,9 +45,8 @@ NodoArbol *_ptrCondCumplida;
 NodoArbol *_ptrPrint;
 NodoArbol *_ptrRead;
 char *_comparador;
-NodoPila *_pilaTrue = NULL;
-NodoPila *_pilaFalse = NULL;
-NodoPila *_pilaCondicion = NULL;
+
+Pila _pilaCondicion;
 
 int _cantIds = 0;
 int _cantFacts = 0;
@@ -67,9 +69,10 @@ char* getTipoVariable(char * id);
 char* getTipoDeOperacion(NodoArbol *nodo1, NodoArbol *nodo2);
 int validarAsignacion(char *id, char *tipoExp);
 void realizarAsignacionMultiple();
-int pilaVacia(NodoPila *pila);
-NodoArbol* desapilarBloque(NodoPila *pila);
-void apilarBloque(NodoArbol *bloque, NodoPila *pila);
+
+int pilaVacia(Pila *pila);
+NodoArbol* desapilarBloque(Pila *pila);
+int apilarBloque(Pila *pila, NodoArbol *nodo);
 
 FILE* archivoAssembler;
 FILE* archReglas;
@@ -172,18 +175,18 @@ lista_asig: ID CORCH_C ASIG CORCH_A expresion {printf("regla 24 \n"); fprintf(ar
                                                                                                         _expresiones[_cantExpresiones] = _ptrExpr;
                                                                                                         _cantExpresiones++;};
 
-seleccion: IF P_A condicion P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 25");printf("\n"); fprintf(archReglas, "regla 25\n");  _ptrSeleccion = crearNodo("if", desapilarBloque(_pilaCondicion), crearNodo("cuerpoIf", desapilarBloque(_pilaTrue), desapilarBloque(_pilaFalse), ""), ""); ifBody = 0; _cantBloquesIf = 0;}
-    | IF P_A condicion P_C LL_A cond_cumplida LL_C {printf("regla 26");printf("\n"); fprintf(archReglas, "regla 26\n"); _ptrSeleccion = crearNodo("if", desapilarBloque(_pilaCondicion), desapilarBloque(_pilaTrue), ""); ifBody = 0; _cantBloquesIf = 0;}
-    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C {printf("regla 27");printf("\n"); fprintf(archReglas, "regla 27\n"); _ptrSeleccion = crearNodo("if", crearNodo("not", desapilarBloque(_pilaCondicion), NULL, ""), desapilarBloque(_pilaTrue), ""); ifBody = 0; _cantBloquesIf = 0;}
-    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 28");printf("\n");  fprintf(archReglas, "regla 28\n"); _ptrSeleccion = crearNodo("if", crearNodo("not", desapilarBloque(_pilaCondicion), NULL, ""), crearNodo("cuerpoIf", desapilarBloque(_pilaTrue), desapilarBloque(_pilaFalse), ""), ""); ifBody = 0; _cantBloquesIf = 0;};
+seleccion: IF P_A condicion P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 25");printf("\n"); fprintf(archReglas, "regla 25\n");  _ptrSeleccion = crearNodo("if", desapilarBloque(&_pilaCondicion), crearNodo("cuerpoIf", _ptrCondCumplida, _elseSelec, ""), ""); ifBody = 0; _cantBloquesIf = 0;}
+    | IF P_A condicion P_C LL_A cond_cumplida LL_C {printf("regla 26");printf("\n"); fprintf(archReglas, "regla 26\n"); _ptrSeleccion = crearNodo("if", desapilarBloque(&_pilaCondicion), _ptrCondCumplida, ""); ifBody = 0; _cantBloquesIf = 0;}
+    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C {printf("regla 27");printf("\n"); fprintf(archReglas, "regla 27\n"); _ptrSeleccion = crearNodo("if", crearNodo("not", desapilarBloque(&_pilaCondicion), NULL, ""), _ptrCondCumplida, ""); ifBody = 0; _cantBloquesIf = 0;}
+    | IF P_A NOT P_A condicion P_C P_C LL_A cond_cumplida LL_C else_seleccion {printf("regla 28");printf("\n");  fprintf(archReglas, "regla 28\n"); _ptrSeleccion = crearNodo("if", crearNodo("not", desapilarBloque(&_pilaCondicion), NULL, ""), crearNodo("cuerpoIf", _ptrCondCumplida, _elseSelec, ""), ""); ifBody = 0; _cantBloquesIf = 0;};
 
-else_seleccion: ELSE LL_A sentencia LL_C { printf("Regla 29\n"); fprintf(archReglas, "regla 29\n"); apilarBloque(_ptrSentencia, _pilaFalse);};
+else_seleccion: ELSE LL_A sentencia LL_C { printf("Regla 29\n"); fprintf(archReglas, "regla 29\n"); _elseSelec = _ptrSentencia;};
 
-cond_cumplida: sentencia { printf("Regla 30 \n"); fprintf(archReglas, "regla 30\n"); apilarBloque(_ptrSentencia, _pilaTrue);};
+cond_cumplida: sentencia { printf("Regla 30 \n"); fprintf(archReglas, "regla 30\n"); _ptrCondCumplida = _ptrSentencia;};
 
-condicion: comparacion {printf("regla 31");printf("\n"); fprintf(archReglas, "regla 31\n"); _ptrCondicion = _ptrComparacion; apilarBloque(_ptrCondicion, _pilaCondicion);}
-    | condicion AND comparacion  {printf("regla 32");printf("\n"); fprintf(archReglas, "regla 32\n"); _ptrCondicion = crearNodo("and", _ptrCondicion, _ptrComparacion, ""); apilarBloque(_ptrCondicion, _pilaCondicion);}
-    | condicion OR comparacion {printf("regla 33");printf("\n"); fprintf(archReglas, "regla 33\n"); _ptrCondicion = crearNodo("or", _ptrCondicion, _ptrComparacion, ""); apilarBloque(_ptrCondicion, _pilaCondicion);};  
+condicion: comparacion {printf("regla 31");printf("\n"); fprintf(archReglas, "regla 31\n"); _ptrCondicion = _ptrComparacion; apilarBloque(&_pilaCondicion, _ptrCondicion);}
+    | condicion AND comparacion  {printf("regla 32");printf("\n"); fprintf(archReglas, "regla 32\n"); _ptrCondicion = crearNodo("and", _ptrCondicion, _ptrComparacion, ""); apilarBloque(&_pilaCondicion, _ptrCondicion);}
+    | condicion OR comparacion {printf("regla 33");printf("\n"); fprintf(archReglas, "regla 33\n"); _ptrCondicion = crearNodo("or", _ptrCondicion, _ptrComparacion, ""); apilarBloque(&_pilaCondicion, _ptrCondicion);};  
 
 comparacion: ID comparador factor {printf("regla 34");printf("\n"); fprintf(archReglas, "regla 34\n"); _ptrComparacion = crearNodo(_comparador, crearHoja($1, getTipoVariable($1)), _ptrFactor, "");};
 
@@ -328,32 +331,36 @@ int validarDeclaracion(char *id)
     return 1;
 }
 
-void apilarBloque(NodoArbol *bloque, NodoPila *pila) 
+int apilarBloque(Pila *pila, NodoArbol *nodo) 
 {
-    NodoPila aux;
-    
-    aux.bloque = bloque;
-    aux.sig = pila;
+    if(pila->tope == TAM_PILA -1)
+    {
+        printf("Pila llena\n");
+        return -1;
+    }
 
-    pila = &aux;
+    pila->tope++;
+    pila->vecPila[pila->tope] = nodo;
+    return 1;
 }
 
-NodoArbol* desapilarBloque(NodoPila *pila) 
+NodoArbol* desapilarBloque(Pila *pila) 
 {
-    NodoPila aux;
+    NodoArbol *nodoArbol;
+    if( pila->tope == -1)
+    {
+        printf("Pila vacia\n");
+        return -1;
+    }
 
-    if(pilaVacia(pila) == 1)
-        return NULL;
-    
-    aux = *pila;
-    pila = aux.sig;
-
-    return aux.bloque;
+    nodoArbol = pila->vecPila[pila->tope];
+    pila->tope--;
+    return nodoArbol;
 }
 
-int pilaVacia(NodoPila *pila)
+int pilaVacia(Pila *pila)
 {
-    if(pila == NULL)
+    if(pila->tope == TOPE_PILA_VACIA)
         return 1;
 
     return 0;
