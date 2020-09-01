@@ -28,10 +28,11 @@ int validarDeclaracionExistente(char * id);
 int verificarIdDeclarado(char id[255]);
 int reg_tiene_tipo(int registro);
 char* validarAsignacionCorrecta(char * id , char * constante);
+char* obtener_tipo_variable(char *id);
 
 // Escritura en tabla de simbolos
 void insertar_reg_en_ts(char *nombre, char *tipo, char *valor, char *longitud);
-void insertar_tipo_en_ts(char* tiposVariables[20], char *id);
+void insertar_tipo_en_ts(char* tipoVar, char *id);
 int reg_existente(char *nom_reg);
 int insertar_id_en_ts(char *cad);
 int insertar_cteint_en_ts(int entero);
@@ -48,11 +49,10 @@ void guardar_tabla_simbolos();
 DIGITO			[0-9]
 LETRA			[a-zA-Z]
 ID				{LETRA}({LETRA}|{DIGITO}|_)*
-REAL      {DIGITO}+"."{DIGITO}+
-CTEINT       {DIGITO}+
-CTESTRING	\"[a-zA-Z0-9 ]+\"
-VALID_STRING    ({CARACTER}+|{DELIM})*
-COMENTARIO_S    --\/{VALID_STRING}\/--
+REAL      		{DIGITO}+"."{DIGITO}+
+CTEINT       	{DIGITO}+
+CTESTRING		\"[a-zA-Z0-9 ]+\"
+COMENTARIO_S    "--/{LETRA}|{DIGITO}|@|<|>|!|?/--"
 
 %%
 ":="		{ return ASIG;}
@@ -79,8 +79,8 @@ COMENTARIO_S    --\/{VALID_STRING}\/--
 ";"			{ return PUNTO_COMA;}
 "||"		{ return OR;}
 "&&"		{ return AND;}
-"while"		{ return WHILE;}
-"endwhile"	{	return ENDWHILE;}
+"repeat"	{ return REPEAT;}
+"endrepeat"	{ return ENDREPEAT;}
 "print"		{ return PRINT;}
 "read"		{ return READ;}
 "var"		{ return VAR;}
@@ -96,11 +96,9 @@ COMENTARIO_S    --\/{VALID_STRING}\/--
 {CTEINT}		{ yylval.intVal = atoi(yytext); validar_cte_int(yylval.intVal); insertar_cteint_en_ts(yylval.intVal); return CTE_INT;}
 {REAL}			{ yylval.realVal = atof(yytext); validar_cte_real(yylval.realVal); insertar_ctereal_en_ts(yylval.realVal); return CTE_REAL;}
 
-
 " "
 "\n"
 "\t"
-
 %%
 
 int validar_cte_int(int num)
@@ -170,16 +168,16 @@ void insertar_reg_en_ts(char *nombre, char *tipo, char *valor, char *longitud)
 	cant_reg++;
 }
 
-void insertar_tipo_en_ts(char* tiposVariables[20], char *id)
+void insertar_tipo_en_ts(char* tipoVar, char *id)
 {	
+	int registro;
 	char *idABuscar = (char*) malloc(sizeof(int)+1);
 	*idABuscar = '\0';
 	strcat(idABuscar, "_");
 	strcat(idABuscar, id);
-
-	int registro = reg_existente(idABuscar);
+	registro = reg_existente(idABuscar);
 	if(registro != -1){
-		tabla_simbolos[registro].tipo = tiposVariables[regTiposVariables];
+		tabla_simbolos[registro].tipo = tipoVar;
 		regTiposVariables++;
 	}
 }
@@ -187,15 +185,37 @@ void insertar_tipo_en_ts(char* tiposVariables[20], char *id)
 int verificarIdDeclarado(char id[255]){
 	char *idABuscar = (char*) malloc(sizeof(int)+1);
 	*idABuscar = '\0';
+
 	strcat(idABuscar, "_");
 	strcat(idABuscar, id);
+
 	int registro = reg_existente(idABuscar);
+
 	if(registro != -1) {
 		 if(reg_tiene_tipo(registro)){
 		 	return 1;
 		 }
 	}
 	return 0;
+}
+
+void asignarTipoACteConNombre(char * id, char * constante) {
+	char *idABuscar = (char*) malloc(sizeof(int)+1);
+
+	*idABuscar = '\0';
+	strcat(idABuscar, "_");
+	strcat(idABuscar, id);
+
+	int registroId = reg_existente(idABuscar);
+
+	char *constABuscar = (char*) malloc(sizeof(int)+1);
+	*constABuscar = '\0';
+	strcat(constABuscar, "_");
+	strcat(constABuscar, constante);
+
+	int registroConst = reg_existente(constABuscar);
+
+	tabla_simbolos[registroId].tipo = tabla_simbolos[registroConst].tipo;
 }
 
 char* validarAsignacionCorrecta(char * id , char * constante){
@@ -213,16 +233,35 @@ char* validarAsignacionCorrecta(char * id , char * constante){
 	strcat(constABuscar, constante);
 
 	int registroConst = reg_existente(constABuscar);
+
 	char* resultado = strstr(tabla_simbolos[registroConst].tipo,tabla_simbolos[registroId].tipo);
 	return resultado;
+}
+
+char * obtener_tipo_variable(char *id)
+{
+	char *idABuscar = (char*) malloc(sizeof(int)+1);
+
+	*idABuscar = '\0';
+	strcat(idABuscar, "_");
+	strcat(idABuscar, id);
+
+	int registro = reg_existente(idABuscar);
+
+	if(registro == -1) {
+		printf("Variable %s no declarada", id);
+		exit(1);
+	}
+	return tabla_simbolos[registro].tipo;
 }
 
 int reg_existente(char *nom_reg)
 {
 	int i;
 	for(i=0;i<cant_reg;i++){
-		if (strcmpi(nom_reg, tabla_simbolos[i].nombre) == 0)
+		if (strcmpi(nom_reg, tabla_simbolos[i].nombre) == 0) {
 			return i;
+		}
 	}
 	return -1;
 }
@@ -259,7 +298,7 @@ int insertar_cteint_en_ts(int entero)
 	strcat(nombre, valor);
 	
 	if (reg_existente(nombre) == -1)
-		insertar_reg_en_ts(nombre, "CTE_INT", valor, "-");
+		insertar_reg_en_ts(nombre, "INT", valor, "-");
 
 	return 1;
 }
@@ -275,7 +314,7 @@ int insertar_ctereal_en_ts(float real)
 	strcat(nombre, valor);
 	
 	if (reg_existente(nombre) == -1)
-		insertar_reg_en_ts(nombre, "CTE_REAL", valor, "-");
+		insertar_reg_en_ts(nombre, "REAL", valor, "-");
 
 	return 1;
 }
@@ -291,7 +330,7 @@ int insertar_ctestring_en_ts(char *cad)
 	itoa(strlen(cad), longitud, 10);
 	
 	if (reg_existente(nombre) == -1)
-		insertar_reg_en_ts(nombre, "CTE_STRING", cad, longitud);
+		insertar_reg_en_ts(nombre, "STRING", cad, longitud);
 
 	return 1;
 }

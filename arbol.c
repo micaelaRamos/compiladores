@@ -5,22 +5,21 @@
 FILE *file;
 
 /* prototipos */
-ptrNodoArbol crearNodo(char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol ptrArbolDer);
-ptrNodoArbol crearHoja(char valor[255]);
+ptrNodoArbol crearNodo(char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol ptrArbolDer, char *tipoNodo);
+ptrNodoArbol crearHoja(char valor[255], char *tipoNodo);
 void postOrden(ptrNodoArbol ptrArbol);
 void inicializarArbol();
 
 
 /* inserta un nodo dentro del Arbol */
-ptrNodoArbol crearNodo( char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol ptrArbolDer ) {
-
-
+ptrNodoArbol crearNodo( char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol ptrArbolDer, char *tipoNodo ) {
     /*Crea el nodo que va a devolver*/
     ptrNodoArbol ptrNodo;
     ptrNodo = malloc(sizeof(NodoArbol));
     /*Asigno los parametros*/
     strcpy((ptrNodo)->valor,valor);
-    printf("%s" "%s" "%s\n", "Consola: Guardando Valor ", (ptrNodo)->valor, " en el nodo");
+    ptrNodo->tipoNodo = tipoNodo;
+    printf("Consola: Guardando Valor %s en el nodo con el tipo %s\n", (ptrNodo)->valor, (ptrNodo)->tipoNodo);
     (ptrNodo)->ptrIzq = ptrArbolIzq;
     (ptrNodo)->prtDer = ptrArbolDer;
 
@@ -28,14 +27,16 @@ ptrNodoArbol crearNodo( char valor[255], ptrNodoArbol ptrArbolIzq, ptrNodoArbol 
 
 }
 
-ptrNodoArbol crearHoja(char valor[255]){
+ptrNodoArbol crearHoja(char valor[255], char *tipoNodo){
   /*Crea el nodo que va a devolver*/
   ptrNodoArbol ptrNodo;
   ptrNodo = malloc(sizeof(NodoArbol));
+  
 
   /*Asigno los parametros*/
   strcpy((ptrNodo)->valor,valor);
-  printf("%s" "%s" "%s\n", "Consola: Guardando Valor ", (ptrNodo)->valor, " en la hoja");
+  ptrNodo->tipoNodo = tipoNodo;
+  printf("Consola: Guardando Valor %s en la hoja con el tipo %s\n", (ptrNodo)->valor,  ptrNodo->tipoNodo);
   (ptrNodo)->ptrIzq = NULL;
   (ptrNodo)->prtDer = NULL;
 
@@ -58,6 +59,7 @@ void inOrder(ptrNodoArbol ptrArbol)
     inOrder(ptrArbol->ptrIzq);
     fprintf(file, "%s ", ptrArbol->valor);
     printf("%s ", ptrArbol->valor);
+    printf("%S ", ptrArbol->tipoNodo);
     inOrder(ptrArbol->prtDer);
   }
 }

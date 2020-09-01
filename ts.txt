@@ -1,4 +1,14 @@
-_var1			-
-_2	CTE_INT	2	-
-_3	CTE_INT	3	-
-_5	CTE_INT	5	-
+_var1	INT		-
+_var2	STRING		-
+_var3	INT		-
+_1	INT	1	-
+_hola	STRING	hola	4
+_73	INT	73	-
+_cteConNombre	STRING		-
+_cte	STRING	cte	3
+_cteEntera	INT		-
+_35	INT	35	-
+_2	INT	2	-
+_5	INT	5	-
+_52	INT	52	-
+_chau	STRING	chau	4
